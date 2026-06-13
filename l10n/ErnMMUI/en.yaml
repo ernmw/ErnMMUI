@@ -1,0 +1,34 @@
+name: "Potion Master"
+description: "Pachinko Alchemy."
+
+modSettingsAdminTitle: "Admin"
+disable_name: "Disable Mod"
+disable_description: "Turn the mod off."
+debugMode_name: "Debug Mode"
+debugMode_description: "Turn on verbose logging. Please turn this on and grab the log if you are going to report an issue."
+
+modSettingsUITitle: "UI"
+enableCustomUIScale_name: "Use Custom UI Scale"
+enableCustomUIScale_description: "Turn on to scale the alchemy window separately from your other windows. This might look awful."
+customUIScale_name: "Custom UI Scale Factor"
+
+effectWithParam: "{effectName}: {effectParam}"
+minMaxWithDuration: "{min} to {max} for {duration} seconds"
+magnitudeWithDuration: "{magnitude} for {duration} seconds"
+
+itemQuantity: "{name} x{quantity}"
+
+effectColumn: "Primary Effect"
+ingredient1Column: "1st Ingredient"
+ingredient2Column: "2nd Ingredient"
+batchColumn: "Batch Size"
+selectEffectHint: "Select a primary effect."
+
+brewButton: "Brew"
+doneButton: "Done"
+againButton: "Again"
+cancelButton: "Cancel"
+
+ingredient: "Ingredient"
+mainEffect: "Primary Effect"
+sideEffects: "Side Effects"
