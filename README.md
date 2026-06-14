@@ -16,14 +16,28 @@ content=ErnMMUI.omwscripts
 ## Credits
 
 - HayghinDaedricFont by Georg A. Duffner & M. Millar -- https://github.com/mmillar-bolis/HayghinDaedricFont (OFL-1.1 license)
-
-- ping.mp3 by jolup123 -- https://freesound.org/s/668790/ -- License: Creative Commons 0
-- cancel.wav by pierrecartoons1979 -- https://freesound.org/s/90119/ -- License: Attribution NonCommercial 3.0
-- https://labs.mapbox.com/maki-icons/
-- Virtual List by Greatness7 (MIT)
-- PCP myui by Qlonever (MIT)
-- https://tornadogames.itch.io/magic-sparksattacks-for-the-devs/devlog/823492/just-posted-an-awesome-new-free-pack-of-sprites-under-cc0 (CC0)
 - https://screamingbrainstudios.itch.io/seamless-space-backgrounds (CC0)
-- https://opengameart.org/content/hit-animation-frame-by-frame
-- https://freesound.org/people/Fr%C3%A9d%C3%A9ricDubois/sounds/804920/ - metal high pitched boink by FrédéricDubois -- https://freesound.org/s/804920/ -- License: Attribution 4.0
-- https://kenney.nl/assets/particle-pack (CC0)
+- PCP myui by Qlonever (MIT)
+
+
+## random notes
+
+
+magick -background transparent -fill white -gravity center -size 32x32 +antialias -font "Hayghin-Daedric" label:s S.png
+
+
+convert S.png \
+  \( +clone -alpha extract -background gray -alpha shape \) \
+  -geometry +1+1 \
+  +swap -composite S_d.png
+
+
+
+for f in *.png; do convert \
+  \( "$f" -alpha extract -background gray -alpha shape \) \
+  \( +clone -geometry +1+0 \) \
+  \( +clone -geometry +0+1 \) \
+  \( +clone -geometry +1+1 \) \
+  "$f" \
+  -background none -flatten \
+  "./tmp/shadow_$f" && mv "./tmp/shadow_$f" "$f"; done

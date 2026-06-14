@@ -65,19 +65,7 @@ local function init()
         page = MOD_NAME,
         permanentStorage = true,
         order = 10,
-        settings = { {
-            key = "enableCustomUIScale",
-            name = "enableCustomUIScale_name",
-            description = "enableCustomUIScale_description",
-            default = false,
-            renderer = "checkbox"
-        }, {
-            key = "customUIScale",
-            name = "customUIScale_name",
-            renderer = "number",
-            default = 1,
-            argument = { integer = false, min = 0.25, max = 4 },
-        }
+        settings = {
         }
     }
 end

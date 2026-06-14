@@ -1,5 +1,3 @@
 MENU:scripts/ErnMMUI/settings/menu_settings.lua
 
 PLAYER:scripts/ErnMMUI/player.lua
-GLOBAL:scripts/ErnMMUI/global.lua
-CUSTOM:scripts/ErnMMUI/alchemy.lua
