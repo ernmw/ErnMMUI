@@ -98,7 +98,12 @@ local paddingLayout = {
     external = { grow = 1 }
 }
 
-local function buildLayout(heartComponents, heartAmounts, heartCount)
+-- flashSet (optional): table keyed by heart index; truthy values trigger a flash.
+-- dt (optional): elapsed seconds passed through to GetLayout; defaults to 0.
+local function buildLayout(heartComponents, heartAmounts, heartCount, flashSet, dt)
+    flashSet         = flashSet or {}
+    dt               = dt or 0
+
     local rowLayouts = {}
     local heartIdx   = 1
 
@@ -108,7 +113,8 @@ local function buildLayout(heartComponents, heartAmounts, heartCount)
             if heartIdx > heartCount then break end
             local hc                      = heartComponents[heartIdx]
             local amount                  = heartAmounts[heartIdx]
-            rowChildren[#rowChildren + 1] = hc:GetLayout(amount, false, 0)
+            local flash                   = flashSet[heartIdx] or false
+            rowChildren[#rowChildren + 1] = hc:GetLayout(amount, flash, dt)
             heartIdx                      = heartIdx + 1
 
             rowChildren[#rowChildren + 1] = paddingLayout
@@ -228,41 +234,13 @@ function HeartHealthMethods:onUpdate(dt, currentHealth, maxHealth)
         end
     end
 
-    self._heartAmounts  = newAmounts
-    self._currentHealth = currentHealth
+    self._heartAmounts        = newAmounts
+    self._currentHealth       = currentHealth
 
-    -- Rebuild heart-row layouts.
-    local rowLayouts    = {}
-    local heartIdx      = 1
-    local rowIdx        = 1
-
-    while heartIdx <= self._heartCount do
-        local rowChildren = {}
-        for _ = 1, HEARTS_PER_ROW do
-            if heartIdx > self._heartCount then break end
-            local hc                      = self._heartComponents[heartIdx]
-            local amount                  = newAmounts[heartIdx]
-            local flash                   = flashSet[heartIdx] or false
-            rowChildren[#rowChildren + 1] = hc:GetLayout(amount, flash, dt)
-            heartIdx                      = heartIdx + 1
-
-            rowChildren[#rowChildren + 1] = paddingLayout
-        end
-
-        rowLayouts[rowIdx] = {
-            type    = ui.TYPE.Flex,
-            props   = {
-                horizontal = true,
-                arrange    = ui.ALIGNMENT.Start,
-                align      = ui.ALIGNMENT.Start,
-                autoSize   = true,
-            },
-            content = ui.content(rowChildren),
-        }
-        rowIdx = rowIdx + 1
-    end
-
-    self._elem.layout.content = ui.content(rowLayouts)
+    -- Rebuild and push the updated layout.
+    local newLayout           = buildLayout(
+        self._heartComponents, newAmounts, self._heartCount, flashSet, dt)
+    self._elem.layout.content = newLayout.content
     self._elem:update()
 end
 
