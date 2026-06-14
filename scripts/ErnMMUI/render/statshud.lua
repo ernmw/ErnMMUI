@@ -156,6 +156,11 @@ local function itemMaxCharges(item)
     }
 end
 
+local paddingLayout = {
+    name = 'padWidget',
+    props = { size = util.vector2(math.max(1, 4 * math.ceil(settings.ui.scaling)), math.max(1, 4 * math.ceil(settings.ui.scaling))) },
+}
+
 --- Update every frame from your player_hud script.
 ---@param self           StatsHUD
 ---@param dt             number   elapsed seconds
@@ -198,10 +203,13 @@ function StatsHUDMethods:onUpdate(dt)
 
         local items = {
             self._heartHealth:getElement().layout,
+            paddingLayout,
             self._fatigueBar.elem.layout,
+            paddingLayout,
         }
         if showMagickaBar then
             items[#items + 1] = self._magickaBar.elem.layout
+            items[#items + 1] = paddingLayout
         end
         if showChargesBar then
             items[#items + 1] = self._chargesBar.elem.layout

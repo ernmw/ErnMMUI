@@ -21,7 +21,6 @@ local margin   = require("scripts.ErnMMUI.render.margin")
 local statsHud = require('scripts.ErnMMUI.render.statshud')
 
 
-
 local hud = statsHud.New()
 
 
