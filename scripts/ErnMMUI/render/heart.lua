@@ -107,7 +107,7 @@ local function buildAtlasTextures(atlasPath, atlasResolution)
     return textures
 end
 
-local atlas                   = buildAtlasTextures('Textures/ErnMMUI/heart.dds', util.vector2(64, 64))
+local atlas                   = buildAtlasTextures('Textures/ErnMMUI/heart.dds', util.vector2(256, 256))
 
 -- ---------------------------------------------------------------------------
 -- HeartComponent

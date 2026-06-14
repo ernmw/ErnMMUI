@@ -46,7 +46,7 @@ end
 -- Constants
 -- ---------------------------------------------------------------------------
 
-local BAR_LENGTH    = 160
+local BAR_SIZE      = util.vector2(160, 24)
 
 local COLOR_FATIGUE = configColor("fatigue")
 local COLOR_MAGICKA = configColor("magic")
@@ -92,11 +92,11 @@ local function NewStatsHUD(
 
     self._fatigueBar = Bar.New(
         currentFatigue / math.max(maxFatigue, 1),
-        COLOR_FATIGUE, FLASH_FATIGUE, BAR_LENGTH * settings.ui.scaling)
+        COLOR_FATIGUE, FLASH_FATIGUE, BAR_SIZE * settings.ui.scaling)
 
     self._magickaBar = Bar.New(
         currentMagicka / math.max(maxMagicka, 1),
-        COLOR_MAGICKA, FLASH_MAGICKA, BAR_LENGTH * settings.ui.scaling)
+        COLOR_MAGICKA, FLASH_MAGICKA, BAR_SIZE * settings.ui.scaling)
 
     -- Root vertical flex: heart rows on top, then fatigue, then magicka.
     self._elem = ui.create({

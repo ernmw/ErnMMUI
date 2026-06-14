@@ -94,7 +94,7 @@ end
 
 local paddingLayout = {
     name = 'padWidget',
-    props = { size = util.vector2(1, 1) },
+    props = { size = util.vector2(math.max(1, math.ceil(settings.ui.scaling)), math.max(1, math.ceil(settings.ui.scaling))) },
     external = { grow = 1 }
 }
 
@@ -236,6 +236,8 @@ function HeartHealthMethods:onUpdate(dt, currentHealth, maxHealth)
             local flash                   = flashSet[heartIdx] or false
             rowChildren[#rowChildren + 1] = hc:GetLayout(amount, flash, dt)
             heartIdx                      = heartIdx + 1
+
+            rowChildren[#rowChildren + 1] = paddingLayout
         end
 
         rowLayouts[rowIdx] = {

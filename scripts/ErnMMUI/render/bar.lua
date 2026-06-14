@@ -19,13 +19,13 @@ local ui         = require("openmw.ui")
 local util       = require("openmw.util")
 local interfaces = require('openmw.interfaces')
 
-local function barLayout(value, color, flashColor, length)
+local function barLayout(value, color, flashColor, size)
     return {
         type = ui.TYPE.Widget,
         name = 'bar',
         template = interfaces.MWUI.templates.borders,
         props = {
-            size = util.vector2(length, 24),
+            size = size,
         },
         content = ui.content {
             {
@@ -89,14 +89,14 @@ local flashSpeed     = 0.1
 local BarFunctions   = {}
 BarFunctions.__index = BarFunctions
 
-function NewBar(ratio, color, flashColor, length)
+function NewBar(ratio, color, flashColor, size)
     local new = {
         ratio = ratio,
         flashRatio = 0,
         color = color,
         flashColor = flashColor,
-        length = length,
-        elem = ui.create(barLayout(ratio, color, flashColor, length))
+        size = size,
+        elem = ui.create(barLayout(ratio, color, flashColor, size))
     }
     setmetatable(new, BarFunctions)
     return new
