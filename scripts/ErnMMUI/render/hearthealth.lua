@@ -210,10 +210,19 @@ function HeartHealthMethods:onUpdate(dt, currentHealth, maxHealth)
     -- Flash hearts that lost fill this frame.
     local flashSet = {}
     if currentHealth < self._currentHealth or rescale then
+        -- Find the rightmost heart that has any fill at the new health value.
+        -- This heart absorbs the damage even if its sprite didn't step down.
+        local rightmostFilledHeart = 0
+        for i = 1, self._heartCount do
+            if newAmounts[i] ~= Heart.AMOUNT.EMPTY then
+                rightmostFilledHeart = i
+            end
+        end
+
         for i = 1, self._heartCount do
             local oldA = oldAmounts[i] or Heart.AMOUNT.EMPTY
             local newA = newAmounts[i] or Heart.AMOUNT.EMPTY
-            if newA < oldA then
+            if newA < oldA or i == rightmostFilledHeart then
                 flashSet[i] = true
             end
         end
