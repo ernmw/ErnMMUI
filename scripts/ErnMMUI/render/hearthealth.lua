@@ -16,19 +16,12 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-local ui               = require('openmw.ui')
-local util             = require('openmw.util')
-local async            = require('openmw.async')
-local Heart            = require('scripts.ErnMMUI.render.heart')
-local settings         = require("scripts.ErnMMUI.settings.settings")
-
--- ---------------------------------------------------------------------------
--- Constants
--- ---------------------------------------------------------------------------
-
-local HEARTS_PER_ROW   = 10
-local MIN_HP_PER_HEART = 8  -- a heart must represent at least this many HP
-local HEART_SIZE       = 32 -- display size of each heart icon in pixels
+local ui       = require('openmw.ui')
+local util     = require('openmw.util')
+local async    = require('openmw.async')
+local Heart    = require('scripts.ErnMMUI.render.heart')
+local const    = require('scripts.ErnMMUI.render.const')
+local settings = require("scripts.ErnMMUI.settings.settings")
 
 -- ---------------------------------------------------------------------------
 -- Helper: compute heart count and HP-per-heart from max health X.
@@ -44,8 +37,8 @@ local function computeHeartScaling(maxHealth)
     local heartCount = math.max(math.ceil(maxHealth / (4 * fourth)), 1)
     local hpPerHeart = maxHealth / heartCount
 
-    if hpPerHeart < MIN_HP_PER_HEART then
-        heartCount = math.max(math.floor(maxHealth / MIN_HP_PER_HEART), 1)
+    if hpPerHeart < const.MIN_HP_PER_HEART then
+        heartCount = math.max(math.floor(maxHealth / const.MIN_HP_PER_HEART), 1)
         hpPerHeart = maxHealth / heartCount
     end
 
@@ -82,7 +75,7 @@ local function resizeHeartComponents(components, newCount, all)
     local start = all and 1 or #components + 1
     for i = start, newCount do
         components[i] = Heart.NewHeartComponent({
-            size = util.vector2(HEART_SIZE * settings.ui.scaling, HEART_SIZE * settings.ui.scaling),
+            size = util.vector2(const.HEART_SIZE * settings.ui.scaling, const.HEART_SIZE * settings.ui.scaling),
         })
     end
     while #components > newCount do
@@ -96,7 +89,7 @@ end
 
 local paddingLayout = {
     name = 'padWidget',
-    props = { size = util.vector2(math.max(1, math.ceil(settings.ui.scaling)), math.max(1, math.ceil(settings.ui.scaling))) },
+    props = { size = util.vector2(math.max(const.HEART_PADDING, math.ceil(settings.ui.scaling)), math.max(const.HEART_PADDING, math.ceil(settings.ui.scaling))) },
     external = { grow = 1 }
 }
 
@@ -111,7 +104,7 @@ local function buildLayout(heartComponents, heartAmounts, heartCount, flashSet, 
 
     while heartIdx <= heartCount do
         local rowChildren = {}
-        for _ = 1, HEARTS_PER_ROW do
+        for _ = 1, const.HEARTS_PER_ROW do
             if heartIdx > heartCount then break end
             local hc                      = heartComponents[heartIdx]
             local amount                  = heartAmounts[heartIdx]
@@ -172,7 +165,7 @@ local function NewHeartHealth(maxHealth, currentHealth)
         _heartComponents = {},
         _heartAmounts    = {},
         _heartCount      = 0,
-        _hpPerHeart      = MIN_HP_PER_HEART,
+        _hpPerHeart      = const.MIN_HP_PER_HEART,
         _maxHealth       = maxHealth,
         _currentHealth   = currentHealth,
         _elem            = nil,

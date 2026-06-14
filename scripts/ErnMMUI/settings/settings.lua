@@ -91,7 +91,14 @@ local function init()
                 description = "alwaysShowMagicka_description",
                 default = false,
                 renderer = "checkbox"
-            }
+            },
+            {
+                key = "uniformBarLength",
+                name = "uniformBarLength_name",
+                description = "uniformBarLength_description",
+                default = false,
+                renderer = "checkbox"
+            },
         }
     }
 end

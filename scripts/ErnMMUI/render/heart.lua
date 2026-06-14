@@ -16,8 +16,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-local ui                  = require("openmw.ui")
-local util                = require("openmw.util")
+local ui        = require("openmw.ui")
+local util      = require("openmw.util")
+local const     = require('scripts.ErnMMUI.render.const')
 
 -- ---------------------------------------------------------------------------
 -- Atlas layout (4×4 grid, 16 frames, left→right then top→bottom)
@@ -42,7 +43,7 @@ local util                = require("openmw.util")
 -- ---------------------------------------------------------------------------
 
 -- Amount enum values — use these as the `amount` parameter.
-local AMOUNT              = {
+local AMOUNT    = {
     EMPTY         = 0,
     QUARTER       = 0.25,
     HALF          = 0.5,
@@ -50,18 +51,12 @@ local AMOUNT              = {
     FULL          = 1,
 }
 
--- How long a flash border stays visible after a flash-start trigger (seconds).
-local FLASH_DURATION      = 0.5
-
--- How fast the "beat" animation cycles between frame-A and frame-B (seconds per frame).
-local BEAT_FRAME_DURATION = 0.2
-
 -- ---------------------------------------------------------------------------
 -- Frame index lookup table.
 -- Keys are amount values; values are { plain = {A, B}, flash = {A, B} }.
 -- For EMPTY and FULL there is only one visual frame (A == B).
 -- ---------------------------------------------------------------------------
-local FRAME_MAP           = {
+local FRAME_MAP = {
     [0]    = { plain = { 1, 1 }, flash = { 2, 2 } },
     [0.25] = { plain = { 3, 4 }, flash = { 5, 6 } },
     [0.5]  = { plain = { 7, 8 }, flash = { 9, 10 } },
@@ -149,7 +144,7 @@ function HeartComponentMethods:GetLayout(amount, flashStart, dt)
     -- Update flash timer.
     if flashStart then
         -- Reset to full duration whenever the caller signals a new flash.
-        self._flashTimer = FLASH_DURATION
+        self._flashTimer = const.FLASH_DURATION
     else
         -- Only count down; a false flag never cancels an in-progress flash.
         self._flashTimer = math.max(0, self._flashTimer - dt)
@@ -158,11 +153,11 @@ function HeartComponentMethods:GetLayout(amount, flashStart, dt)
     -- Advance beat animation timer.
     self._beatTime = self._beatTime + dt
     -- Keep it in [0, 2 * BEAT_FRAME_DURATION) so it never grows unbounded.
-    local cycleDuration = BEAT_FRAME_DURATION * 2
+    local cycleDuration = const.BEAT_FRAME_DURATION * 2
     self._beatTime = self._beatTime % cycleDuration
 
     -- Determine beat frame slot: 1 (first half of cycle) or 2 (second half).
-    local beatSlot = (self._beatTime < BEAT_FRAME_DURATION) and 1 or 2
+    local beatSlot = (self._beatTime < const.BEAT_FRAME_DURATION) and 1 or 2
 
     -- Resolve frame map entry.
     local entry = FRAME_MAP[amount]

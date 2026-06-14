@@ -26,6 +26,7 @@ local enchantUtil = require("scripts.ErnMMUI.enchantutil")
 local pself       = require('openmw.self')
 local types       = require('openmw.types')
 local async       = require('openmw.async')
+local const       = require('scripts.ErnMMUI.render.const')
 
 -- from PCP-OpenMW
 -- Get a usable color value from a fallback in openmw.cfg
@@ -67,19 +68,14 @@ local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1)
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
--- claude:
--- we need to show a bar for health instead of hearts when "settings.ui.heats" is false.
--- we should destroy/not create the element we are not using
--- we also need to watch for changes to this value and swap them accordingly, like this:
---[[settings.ui.subscribe(async:callback(function(section, key)
-    print("UI change!")
-    resizeHeartComponents(self._heartComponents, heartCount, true)
-    self._elem:update()
-end))
---]]
-
 local function barSize(max)
-    return util.vector2(20 * math.sqrt(max) * settings.ui.scaling, 24 * settings.ui.scaling)
+    if settings.ui.uniformBarLength then
+        return util.vector2((const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling,
+            const.BAR_HEIGHT * settings.ui.scaling)
+    else
+        return util.vector2(const.BAR_LENGTH_FACTOR * math.sqrt(max) * settings.ui.scaling,
+            const.BAR_HEIGHT * settings.ui.scaling)
+    end
 end
 
 ---@class StatsHUD
