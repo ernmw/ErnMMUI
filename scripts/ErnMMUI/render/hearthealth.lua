@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local ui               = require('openmw.ui')
 local util             = require('openmw.util')
+local async            = require('openmw.async')
 local Heart            = require('scripts.ErnMMUI.render.heart')
 local settings         = require("scripts.ErnMMUI.settings.settings")
 
@@ -77,8 +78,9 @@ end
 -- Internal: grow or shrink the HeartComponent pool to newCount.
 -- Existing components are reused so their beat/flash timers are preserved.
 -- ---------------------------------------------------------------------------
-local function resizeHeartComponents(components, newCount)
-    for i = #components + 1, newCount do
+local function resizeHeartComponents(components, newCount, all)
+    local start = all and 1 or #components + 1
+    for i = start, newCount do
         components[i] = Heart.NewHeartComponent({
             size = util.vector2(HEART_SIZE * settings.ui.scaling, HEART_SIZE * settings.ui.scaling),
         })
@@ -186,6 +188,13 @@ local function NewHeartHealth(maxHealth, currentHealth)
 
     self._elem = ui.create(
         buildLayout(self._heartComponents, self._heartAmounts, self._heartCount))
+
+    -- invalidate the element when settings change
+    settings.ui.subscribe(async:callback(function(section, key)
+        print("UI change!")
+        resizeHeartComponents(self._heartComponents, heartCount, true)
+        self._elem:update()
+    end))
 
     return self
 end
