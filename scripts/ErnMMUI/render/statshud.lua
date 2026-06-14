@@ -28,16 +28,6 @@ local types       = require('openmw.types')
 local async       = require('openmw.async')
 local const       = require('scripts.ErnMMUI.render.const')
 
--- from PCP-OpenMW
--- Get a usable color value from a fallback in openmw.cfg
-local function configColor(setting)
-    local v = core.getGMST('FontColor_color_' .. setting)
-    local values = {}
-    for i in v:gmatch('([^,]+)') do table.insert(values, tonumber(i)) end
-    local color = util.color.rgb(values[1] / 255, values[2] / 255, values[3] / 255)
-    return color
-end
-
 local function lerpColor(a, b, t)
     return util.color.rgba(
         a.r + (b.r - a.r) * t,
@@ -47,22 +37,23 @@ local function lerpColor(a, b, t)
     )
 end
 
-local healthStat    = pself.type.stats.dynamic.health(pself)
-local fatigueStat   = pself.type.stats.dynamic.fatigue(pself)
-local magickaStat   = pself.type.stats.dynamic.magicka(pself)
+local healthStat  = pself.type.stats.dynamic.health(pself)
+local fatigueStat = pself.type.stats.dynamic.fatigue(pself)
+local magickaStat = pself.type.stats.dynamic.magicka(pself)
 
--- ---------------------------------------------------------------------------
--- Constants
--- ---------------------------------------------------------------------------
 
-local COLOR_HEALTH  = configColor("health")
-local COLOR_FATIGUE = configColor("fatigue")
-local COLOR_MAGICKA = configColor("magic")
-local COLOR_CHARGES = configColor("magic_fill")
-local FLASH_HEALTH  = lerpColor(COLOR_HEALTH, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-local FLASH_FATIGUE = lerpColor(COLOR_FATIGUE, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-local FLASH_MAGICKA = lerpColor(COLOR_MAGICKA, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+local FLASH_HEALTH
+local FLASH_FATIGUE
+local FLASH_MAGICKA
+local FLASH_CHARGES
+
+local function updateFlashColors()
+    FLASH_HEALTH  = lerpColor(settings.ui.colorHealth, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+    FLASH_FATIGUE = lerpColor(settings.ui.colorFatigue, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+    FLASH_MAGICKA = lerpColor(settings.ui.colorMagicka, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+    FLASH_CHARGES = lerpColor(settings.ui.colorCharges, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+end
+updateFlashColors()
 
 -- ---------------------------------------------------------------------------
 -- StatsHUD
@@ -143,21 +134,25 @@ local function NewStatsHUD()
     -- Build child components.
     self._heartHealth = HeartHealth.New(healthStat.base + healthStat.modifier, healthStat.current)
 
-    self._healthBar = Bar.New(
-        healthStat.current / math.max(healthStat.base + healthStat.modifier, 1),
-        COLOR_HEALTH, FLASH_HEALTH, barSize(healthStat.base + healthStat.modifier))
+    local makeBars = function()
+        updateFlashColors()
+        self._healthBar = Bar.New(
+            healthStat.current / math.max(healthStat.base + healthStat.modifier, 1),
+            settings.ui.colorHealth, FLASH_HEALTH, barSize(healthStat.base + healthStat.modifier))
 
-    self._fatigueBar = Bar.New(
-        fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
-        COLOR_FATIGUE, FLASH_FATIGUE, barSize(fatigueStat.base + fatigueStat.modifier))
+        self._fatigueBar = Bar.New(
+            fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
+            settings.ui.colorFatigue, FLASH_FATIGUE, barSize(fatigueStat.base + fatigueStat.modifier))
 
-    self._magickaBar = Bar.New(
-        magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
-        COLOR_MAGICKA, FLASH_MAGICKA, barSize(magickaStat.base + magickaStat.modifier))
+        self._magickaBar = Bar.New(
+            magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+            settings.ui.colorMagicka, FLASH_MAGICKA, barSize(magickaStat.base + magickaStat.modifier))
 
-    self._chargesBar = Bar.New(
-        magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
-        COLOR_CHARGES, FLASH_CHARGES, barSize(magickaStat.base + magickaStat.modifier))
+        self._chargesBar = Bar.New(
+            magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+            settings.ui.colorCharges, FLASH_CHARGES, barSize(magickaStat.base + magickaStat.modifier))
+    end
+    makeBars()
 
     -- Root vertical flex: health on top, then fatigue, then magicka/charges.
     -- Content is populated by rebuildContent; start with a minimal placeholder
@@ -181,9 +176,10 @@ local function NewStatsHUD()
     settings.ui.subscribe(async:callback(function(section, key)
         if key == 'hearts' then
             self._useHearts = settings.ui.hearts
-            rebuildContent(self)
-            self._elem:update()
         end
+        makeBars()
+        rebuildContent(self)
+        self._elem:update()
     end))
 
     return self

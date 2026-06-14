@@ -16,3 +16,8 @@ alwaysShowMagicka_name: "Always Show Magicka"
 alwaysShowMagicka_description: "Always keep the magicka bar up."
 uniformBarLength_name: "Uniform Bar Length"
 uniformBarLength_description: "Keep bars a uniform length instead of scaling them on max value."
+
+colorHealth_name: "Health Bar Color"
+colorFatigue_name: "Fatigue Bar Color"
+colorMagicka_name: "Magicka Bar Color"
+colorCharges_name: "Charges Bar Color"

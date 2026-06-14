@@ -19,6 +19,18 @@ local interfaces = require("openmw.interfaces")
 local storage    = require("openmw.storage")
 local MOD_NAME   = require("scripts.ErnMMUI.ns")
 local async      = require("openmw.async")
+local core       = require("openmw.core")
+local util       = require("openmw.util")
+
+-- from PCP-OpenMW
+-- Get a usable color value from a fallback in openmw.cfg
+local function configColor(setting)
+    local v = core.getGMST('FontColor_color_' .. setting)
+    local values = {}
+    for i in v:gmatch('([^,]+)') do table.insert(values, tonumber(i)) end
+    local color = util.color.rgb(values[1] / 255, values[2] / 255, values[3] / 255)
+    return color
+end
 
 local function groupKey(groupName)
     return 'Settings/' .. MOD_NAME .. '/' .. groupName
@@ -98,6 +110,30 @@ local function init()
                 description = "uniformBarLength_description",
                 default = false,
                 renderer = "checkbox"
+            },
+            {
+                key = "colorHealth",
+                name = "colorHealth_name",
+                default = configColor("health"),
+                renderer = "color"
+            },
+            {
+                key = "colorFatigue",
+                name = "colorFatigue_name",
+                default = configColor("fatigue"),
+                renderer = "color"
+            },
+            {
+                key = "colorMagicka",
+                name = "colorMagicka_name",
+                default = configColor("magic"),
+                renderer = "color"
+            },
+            {
+                key = "colorCharges",
+                name = "colorCharges_name",
+                default = configColor("magic_fill"),
+                renderer = "color"
             },
         }
     }
