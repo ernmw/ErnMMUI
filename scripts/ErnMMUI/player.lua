@@ -15,24 +15,45 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
-local MOD_NAME = require("scripts.ErnMMUI.ns")
-local core = require("openmw.core")
-local pself = require("openmw.self")
-local util = require('openmw.util')
-local async = require("openmw.async")
-local types = require('openmw.types')
-local input = require('openmw.input')
-local interfaces = require('openmw.interfaces')
-local settings = require("scripts.ErnMMUI.settings.settings")
+local ui          = require('openmw.ui')
+local util        = require('openmw.util')
+local pself       = require('openmw.self')
+local statsHud    = require('scripts.ErnMMUI.render.statshud')
 
-if settings.admin.disable then
-    print(MOD_NAME .. " is disabled.")
-    return
+local healthStat  = pself.type.stats.dynamic.health(pself)
+local fatigueStat = pself.type.stats.dynamic.fatigue(pself)
+local magickaStat = pself.type.stats.dynamic.magicka(pself)
+
+local hud         = statsHud.New(
+    healthStat.current, healthStat.base + healthStat.modifier,
+    fatigueStat.current, fatigueStat.base + fatigueStat.modifier,
+    magickaStat.current, magickaStat.base + magickaStat.modifier)
+
+
+local root = ui.create {
+    name = "root",
+    layer = 'HUD',
+    type = ui.TYPE.Widget,
+    props = {
+        relativePosition = util.vector2(0, 0),
+        relativeSize = util.vector2(1, 1),
+        anchor = util.vector2(0, 0),
+    },
+    content = ui.content {
+        hud:getElement()
+    }
+}
+
+local function onUpdate(dt)
+    hud:onUpdate(dt,
+        healthStat.current, healthStat.base + healthStat.modifier,
+        fatigueStat.current, fatigueStat.base + fatigueStat.modifier,
+        magickaStat.current, magickaStat.base + magickaStat.modifier)
+    root:update()
 end
 
-local heartBar
-local fatigueBar
-local magickaBar
-
-
-return {}
+return {
+    engineHandlers = {
+        onUpdate = onUpdate,
+    }
+}

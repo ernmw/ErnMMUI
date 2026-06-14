@@ -66,6 +66,18 @@ local function init()
         permanentStorage = true,
         order = 10,
         settings = {
+            {
+                key = "scaling",
+                name = "scaling_name",
+                description = "scaling_description",
+                default = 1,
+                renderer = "number",
+                argument = {
+                    integer = false,
+                    min = 0,
+                    max = 100
+                }
+            },
         }
     }
 end
