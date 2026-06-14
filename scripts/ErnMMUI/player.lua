@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 local ui       = require('openmw.ui')
 local util     = require('openmw.util')
-
+local margin   = require("scripts.ErnMMUI.render.margin")
 local statsHud = require('scripts.ErnMMUI.render.statshud')
 
 
@@ -35,7 +35,7 @@ local root = ui.create {
         anchor = util.vector2(0, 0),
     },
     content = ui.content {
-        hud:getElement()
+        margin.addMarginLayout(hud:getElement(), 5)
     }
 }
 

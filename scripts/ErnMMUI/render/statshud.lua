@@ -168,7 +168,8 @@ function StatsHUDMethods:onUpdate(dt)
 
     local spellStance = types.Actor.getStance(pself) == types.Actor.STANCE.Spell
     local currentSpell = types.Actor.getSelectedSpell(pself)
-    local showMagickaBar = spellStance and currentSpell and currentSpell.type == core.magic.SPELL_TYPE.Spell
+    local showMagickaBar = settings.ui.alwaysShowMagicka or
+        (spellStance and currentSpell and currentSpell.type == core.magic.SPELL_TYPE.Spell)
 
     local chargeInfo
     if types.Actor.getStance(pself) == types.Actor.STANCE.Weapon then

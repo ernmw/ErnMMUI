@@ -80,3 +80,8 @@ local function addMarginLayout(inner, padding)
         }
     }
 end
+
+return {
+    padWidget = padWidget,
+    addMarginLayout = addMarginLayout
+}

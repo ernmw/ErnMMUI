@@ -78,6 +78,13 @@ local function init()
                     max = 100
                 }
             },
+            {
+                key = "alwaysShowMagicka",
+                name = "alwaysShowMagicka_name",
+                description = "alwaysShowMagicka_description",
+                default = false,
+                renderer = "checkbox"
+            }
         }
     }
 end

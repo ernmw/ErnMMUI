@@ -59,7 +59,7 @@ local function barLayout(value, color, flashColor, size)
                         props = {
                             resource = ui.texture { path = 'Textures/ErnMMUI/horz_gradient.dds' },
                             relativeSize = util.vector2(value, 1),
-                            alpha = 0.7,
+                            --alpha = 0.7,
                             color = color,
                         },
                     },
@@ -69,7 +69,7 @@ local function barLayout(value, color, flashColor, size)
                         props = {
                             resource = ui.texture { path = 'Textures/ErnMMUI/horz_gradient.dds' },
                             relativeSize = util.vector2(0, 1),
-                            alpha = 0.7,
+                            --alpha = 0.7,
                             color = flashColor,
                         },
                     },
