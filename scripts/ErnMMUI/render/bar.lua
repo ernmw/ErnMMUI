@@ -108,7 +108,7 @@ function BarFunctions.reset(self, newRatio)
     self.elem:update()
 end
 
-function BarFunctions.onUpdate(self, dt, newRatio)
+function BarFunctions.onUpdate(self, dt, newRatio, size)
     local changed = false
     if newRatio ~= self.ratio then
         if newRatio < self.ratio then
@@ -122,6 +122,7 @@ function BarFunctions.onUpdate(self, dt, newRatio)
         changed = true
     end
     if changed then
+        if size then self.elem.layout.props.size = size end
         setRatio(self.elem, self.ratio, self.flashRatio)
         self.elem:update()
     end

@@ -22,6 +22,7 @@ local HeartHealth = require('scripts.ErnMMUI.render.hearthealth')
 local Bar         = require('scripts.ErnMMUI.render.bar')
 local core        = require("openmw.core")
 local settings    = require("scripts.ErnMMUI.settings.settings")
+local pself       = require('openmw.self')
 
 -- from PCP-OpenMW
 -- Get a usable color value from a fallback in openmw.cfg
@@ -42,43 +43,42 @@ local function lerpColor(a, b, t)
     )
 end
 
+local healthStat    = pself.type.stats.dynamic.health(pself)
+local fatigueStat   = pself.type.stats.dynamic.fatigue(pself)
+local magickaStat   = pself.type.stats.dynamic.magicka(pself)
+
 -- ---------------------------------------------------------------------------
 -- Constants
 -- ---------------------------------------------------------------------------
 
-local BAR_SIZE      = util.vector2(160, 24)
-
 local COLOR_FATIGUE = configColor("fatigue")
 local COLOR_MAGICKA = configColor("magic")
+local COLOR_CHARGES = configColor("magic_fill")
 local FLASH_FATIGUE = lerpColor(COLOR_FATIGUE, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
 local FLASH_MAGICKA = lerpColor(COLOR_MAGICKA, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
 
 -- ---------------------------------------------------------------------------
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
+local function barSize(max)
+    return util.vector2(20 * math.sqrt(max) * settings.ui.scaling, 24)
+end
 
 ---@class StatsHUD
 ---@field _heartHealth   HeartHealth
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
+---@field _chargesBar    table   Bar object
 ---@field _elem          table   root ui element
 
 local StatsHUDMethods   = {}
 StatsHUDMethods.__index = StatsHUDMethods
 
 --- Create a new StatsHUD.
----@param maxHealth      number
----@param currentHealth  number
----@param maxFatigue     number
----@param currentFatigue number
----@param maxMagicka     number
----@param currentMagicka number
 ---@return StatsHUD
-local function NewStatsHUD(
-    maxHealth, currentHealth,
-    maxFatigue, currentFatigue,
-    maxMagicka, currentMagicka)
+local function NewStatsHUD()
     local self = {
         _heartHealth = nil,
         _fatigueBar  = nil,
@@ -88,15 +88,15 @@ local function NewStatsHUD(
     setmetatable(self, StatsHUDMethods)
 
     -- Build child components.
-    self._heartHealth = HeartHealth.New(maxHealth, currentHealth)
+    self._heartHealth = HeartHealth.New(healthStat.base + healthStat.modifier, healthStat.current)
 
     self._fatigueBar = Bar.New(
-        currentFatigue / math.max(maxFatigue, 1),
-        COLOR_FATIGUE, FLASH_FATIGUE, BAR_SIZE * settings.ui.scaling)
+        fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
+        COLOR_FATIGUE, FLASH_FATIGUE, barSize(fatigueStat.base + fatigueStat.modifier))
 
     self._magickaBar = Bar.New(
-        currentMagicka / math.max(maxMagicka, 1),
-        COLOR_MAGICKA, FLASH_MAGICKA, BAR_SIZE * settings.ui.scaling)
+        magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+        COLOR_MAGICKA, FLASH_MAGICKA, barSize(magickaStat.base + magickaStat.modifier))
 
     -- Root vertical flex: heart rows on top, then fatigue, then magicka.
     self._elem = ui.create({
@@ -121,25 +121,19 @@ end
 --- Update every frame from your player_hud script.
 ---@param self           StatsHUD
 ---@param dt             number   elapsed seconds
----@param currentHealth  number
----@param maxHealth      number
----@param currentFatigue number
----@param maxFatigue     number
----@param currentMagicka number
----@param maxMagicka     number
-function StatsHUDMethods:onUpdate(dt,
-                                  currentHealth, maxHealth,
-                                  currentFatigue, maxFatigue,
-                                  currentMagicka, maxMagicka)
+
+function StatsHUDMethods:onUpdate(dt)
     -- Update the heart health meter (handles its own layout patching internally).
-    self._heartHealth:onUpdate(dt, currentHealth, maxHealth)
+    self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
 
     -- Patch the first child of our root layout to mirror whatever the heart
     -- meter just rebuilt, then update the stat bars.
     self._elem.layout.content[1] = self._heartHealth:getElement().layout
 
-    self._fatigueBar:onUpdate(dt, currentFatigue / math.max(maxFatigue, 1))
-    self._magickaBar:onUpdate(dt, currentMagicka / math.max(maxMagicka, 1))
+    self._fatigueBar:onUpdate(dt, fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
+        barSize(fatigueStat.base + fatigueStat.modifier))
+    self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+        barSize(magickaStat.base + magickaStat.modifier))
 
     -- The bar elements call elem:update() themselves; we just need to refresh
     -- the root if the heart layout changed (heart meter calls its own update

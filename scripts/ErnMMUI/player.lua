@@ -15,19 +15,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
-local ui          = require('openmw.ui')
-local util        = require('openmw.util')
-local pself       = require('openmw.self')
-local statsHud    = require('scripts.ErnMMUI.render.statshud')
+local ui       = require('openmw.ui')
+local util     = require('openmw.util')
 
-local healthStat  = pself.type.stats.dynamic.health(pself)
-local fatigueStat = pself.type.stats.dynamic.fatigue(pself)
-local magickaStat = pself.type.stats.dynamic.magicka(pself)
+local statsHud = require('scripts.ErnMMUI.render.statshud')
 
-local hud         = statsHud.New(
-    healthStat.current, healthStat.base + healthStat.modifier,
-    fatigueStat.current, fatigueStat.base + fatigueStat.modifier,
-    magickaStat.current, magickaStat.base + magickaStat.modifier)
+
+
+local hud = statsHud.New()
 
 
 local root = ui.create {
@@ -45,10 +40,7 @@ local root = ui.create {
 }
 
 local function onUpdate(dt)
-    hud:onUpdate(dt,
-        healthStat.current, healthStat.base + healthStat.modifier,
-        fatigueStat.current, fatigueStat.base + fatigueStat.modifier,
-        magickaStat.current, magickaStat.base + magickaStat.modifier)
+    hud:onUpdate(dt)
     root:update()
 end
 
