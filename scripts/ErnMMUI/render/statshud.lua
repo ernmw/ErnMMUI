@@ -65,7 +65,7 @@ local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1)
 -- ---------------------------------------------------------------------------
 
 local function barSize(max)
-    return util.vector2(20 * math.sqrt(max) * settings.ui.scaling, 24)
+    return util.vector2(20 * math.sqrt(max) * settings.ui.scaling, 24 * settings.ui.scaling)
 end
 
 ---@class StatsHUD
@@ -74,7 +74,8 @@ end
 ---@field _magickaBar    table   Bar object
 ---@field _chargesBar    table   Bar object
 ---@field _elem          table   root ui element
-
+---@field _showMagickaBar boolean
+---@field _showChargesBar boolean
 local StatsHUDMethods   = {}
 StatsHUDMethods.__index = StatsHUDMethods
 
@@ -82,11 +83,13 @@ StatsHUDMethods.__index = StatsHUDMethods
 ---@return StatsHUD
 local function NewStatsHUD()
     local self = {
-        _heartHealth = nil,
-        _fatigueBar  = nil,
-        _magickaBar  = nil,
-        _chargesBar  = nil,
-        _elem        = nil,
+        _heartHealth    = nil,
+        _fatigueBar     = nil,
+        _magickaBar     = nil,
+        _chargesBar     = nil,
+        _elem           = nil,
+        _showMagickaBar = nil,
+        _showChargesBar = nil
     }
     setmetatable(self, StatsHUDMethods)
 
@@ -130,7 +133,7 @@ local function itemMaxCharges(item)
     if not item or not item:isValid() then
         return nil
     end
-    local record = item.type.records[item]
+    local record = item.type.record(item)
     if record.enchant == nil then
         return nil
     end
@@ -157,44 +160,54 @@ end
 ---@param self           StatsHUD
 ---@param dt             number   elapsed seconds
 function StatsHUDMethods:onUpdate(dt)
-    -- Update the heart health meter (handles its own layout patching internally).
     self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
-
-    -- Patch the first child of our root layout to mirror whatever the heart
-    -- meter just rebuilt, then update the stat bars.
     self._elem.layout.content[1] = self._heartHealth:getElement().layout
 
     self._fatigueBar:onUpdate(dt, fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
         barSize(fatigueStat.base + fatigueStat.modifier))
 
-
     local spellStance = types.Actor.getStance(pself) == types.Actor.STANCE.Spell
     local currentSpell = types.Actor.getSelectedSpell(pself)
     local showMagickaBar = spellStance and currentSpell and currentSpell.type == core.magic.SPELL_TYPE.Spell
 
-    --- the enchanted item we show charges for will be the one in the spell slot,
-    --- unless we are in weapon stance and the weapon has an onhit enchantment.
-    local weaponStance = types.Actor.getStance(pself) == types.Actor.STANCE.Weapon
     local chargeInfo
-    if weaponStance then
+    if types.Actor.getStance(pself) == types.Actor.STANCE.Weapon then
         local rightHand = pself.type.getEquipment(pself, types.Actor.EQUIPMENT_SLOT.CarriedRight)
         chargeInfo = itemMaxCharges(rightHand)
     else
         chargeInfo = itemMaxCharges(types.Actor.getSelectedEnchantedItem(pself))
     end
 
-    --- This bar should only be a child while showMagickaBar is true.
-    self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
-        barSize(magickaStat.base + magickaStat.modifier))
+    local showChargesBar = chargeInfo ~= nil
 
-    --- This bar should only be a child while chargeInfo is not nil.
-    --- current and max are from the fields in chargeInfo
-    self._chargesBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
-        barSize(magickaStat.base + magickaStat.modifier))
+    -- Only call onUpdate for bars that will be shown.
+    if showMagickaBar then
+        self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+            barSize(magickaStat.base + magickaStat.modifier))
+    end
+    if chargeInfo ~= nil then
+        self._chargesBar:onUpdate(dt, chargeInfo.current / chargeInfo.max,
+            barSize(chargeInfo.max))
+    end
 
-    -- The bar elements call elem:update() themselves; we just need to refresh
-    -- the root if the heart layout changed (heart meter calls its own update
-    -- internally, but the root content slot[1] reference may have changed).
+    -- Rebuild root content only when visibility has changed.
+    if showMagickaBar ~= self._showMagickaBar or showChargesBar ~= self._showChargesBar then
+        self._showMagickaBar = showMagickaBar
+        self._showChargesBar = showChargesBar
+
+        local items = {
+            self._heartHealth:getElement().layout,
+            self._fatigueBar.elem.layout,
+        }
+        if showMagickaBar then
+            items[#items + 1] = self._magickaBar.elem.layout
+        end
+        if showChargesBar then
+            items[#items + 1] = self._chargesBar.elem.layout
+        end
+        self._elem.layout.content = ui.content(items)
+    end
+
     self._elem:update()
 end
 

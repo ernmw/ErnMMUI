@@ -121,6 +121,11 @@ function BarFunctions.onUpdate(self, dt, newRatio, size)
         self.flashRatio = util.clamp(self.flashRatio - flashSpeed * dt, 0, 1)
         changed = true
     end
+    if size and not changed then
+        if size ~= self.elem.layout.props.size then
+            changed = true
+        end
+    end
     if changed then
         if size then self.elem.layout.props.size = size end
         setRatio(self.elem, self.ratio, self.flashRatio)
