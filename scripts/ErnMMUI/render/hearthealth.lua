@@ -191,9 +191,10 @@ local function NewHeartHealth(maxHealth, currentHealth)
 
     -- invalidate the element when settings change
     settings.ui.subscribe(async:callback(function(section, key)
-        print("UI change!")
-        resizeHeartComponents(self._heartComponents, heartCount, true)
-        self._elem:update()
+        if settings.ui.hearts then
+            resizeHeartComponents(self._heartComponents, heartCount, true)
+            self._elem:update()
+        end
     end))
 
     return self

@@ -41,7 +41,7 @@ local function init()
         name = "modSettingsAdminTitle",
         page = MOD_NAME,
         permanentStorage = true,
-        order = 10,
+        order = 15,
         settings = { {
             key = "disable",
             name = "disable_name",
@@ -77,6 +77,13 @@ local function init()
                     min = 0,
                     max = 100
                 }
+            },
+            {
+                key = "hearts",
+                name = "hearts_name",
+                description = "hearts_description",
+                default = true,
+                renderer = "checkbox"
             },
             {
                 key = "alwaysShowMagicka",

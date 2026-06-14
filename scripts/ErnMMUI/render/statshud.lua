@@ -25,6 +25,7 @@ local settings    = require("scripts.ErnMMUI.settings.settings")
 local enchantUtil = require("scripts.ErnMMUI.enchantutil")
 local pself       = require('openmw.self')
 local types       = require('openmw.types')
+local async       = require('openmw.async')
 
 -- from PCP-OpenMW
 -- Get a usable color value from a fallback in openmw.cfg
@@ -53,9 +54,11 @@ local magickaStat   = pself.type.stats.dynamic.magicka(pself)
 -- Constants
 -- ---------------------------------------------------------------------------
 
+local COLOR_HEALTH  = configColor("health")
 local COLOR_FATIGUE = configColor("fatigue")
 local COLOR_MAGICKA = configColor("magic")
 local COLOR_CHARGES = configColor("magic_fill")
+local FLASH_HEALTH  = lerpColor(COLOR_HEALTH, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
 local FLASH_FATIGUE = lerpColor(COLOR_FATIGUE, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
 local FLASH_MAGICKA = lerpColor(COLOR_MAGICKA, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
 local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
@@ -64,12 +67,25 @@ local FLASH_CHARGES = lerpColor(COLOR_CHARGES, util.color.rgba(0.9, 0.9, 0.9, 1)
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
+-- claude:
+-- we need to show a bar for health instead of hearts when "settings.ui.heats" is false.
+-- we should destroy/not create the element we are not using
+-- we also need to watch for changes to this value and swap them accordingly, like this:
+--[[settings.ui.subscribe(async:callback(function(section, key)
+    print("UI change!")
+    resizeHeartComponents(self._heartComponents, heartCount, true)
+    self._elem:update()
+end))
+--]]
+
 local function barSize(max)
     return util.vector2(20 * math.sqrt(max) * settings.ui.scaling, 24 * settings.ui.scaling)
 end
 
 ---@class StatsHUD
 ---@field _heartHealth   HeartHealth
+---@field _healthBar     table   Bar object (used when settings.ui.hearts is false)
+---@field _useHearts     boolean mirrors settings.ui.hearts; drives which widget is active
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
 ---@field _chargesBar    table   Bar object
@@ -79,22 +95,61 @@ end
 local StatsHUDMethods   = {}
 StatsHUDMethods.__index = StatsHUDMethods
 
+local paddingLayout     = {
+    name = 'padWidget',
+    props = { size = util.vector2(math.max(1, 4 * math.ceil(settings.ui.scaling)), math.max(1, 4 * math.ceil(settings.ui.scaling))) },
+}
+
+--- Build the root content table from current visibility state.
+--- Called both on first creation and whenever visibility flags change.
+---@param self StatsHUD
+local function rebuildContent(self)
+    local items = {}
+
+    -- Health: heart widget or bar depending on the setting.
+    if self._useHearts then
+        items[#items + 1] = self._heartHealth:getElement().layout
+    else
+        items[#items + 1] = self._healthBar.elem.layout
+    end
+
+    items[#items + 1] = paddingLayout
+    items[#items + 1] = self._fatigueBar.elem.layout
+    items[#items + 1] = paddingLayout
+
+    if self._showMagickaBar then
+        items[#items + 1] = self._magickaBar.elem.layout
+        items[#items + 1] = paddingLayout
+    end
+    if self._showChargesBar then
+        items[#items + 1] = self._chargesBar.elem.layout
+    end
+
+    self._elem.layout.content = ui.content(items)
+end
+
 --- Create a new StatsHUD.
 ---@return StatsHUD
 local function NewStatsHUD()
     local self = {
         _heartHealth    = nil,
+        _healthBar      = nil,
+        _useHearts      = settings.ui.hearts,
         _fatigueBar     = nil,
         _magickaBar     = nil,
         _chargesBar     = nil,
         _elem           = nil,
-        _showMagickaBar = nil,
-        _showChargesBar = nil
+        _showMagickaBar = false,
+        _showChargesBar = false,
     }
     setmetatable(self, StatsHUDMethods)
 
     -- Build child components.
     self._heartHealth = HeartHealth.New(healthStat.base + healthStat.modifier, healthStat.current)
+
+    self._healthBar = Bar.New(
+        healthStat.current / math.max(healthStat.base + healthStat.modifier, 1),
+        COLOR_HEALTH, FLASH_HEALTH, barSize(healthStat.base + healthStat.modifier))
 
     self._fatigueBar = Bar.New(
         fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
@@ -108,7 +163,9 @@ local function NewStatsHUD()
         magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
         COLOR_CHARGES, FLASH_CHARGES, barSize(magickaStat.base + magickaStat.modifier))
 
-    -- Root vertical flex: heart rows on top, then fatigue, then magicka.
+    -- Root vertical flex: health on top, then fatigue, then magicka/charges.
+    -- Content is populated by rebuildContent; start with a minimal placeholder
+    -- so ui.create has something to work with.
     self._elem = ui.create({
         type    = ui.TYPE.Flex,
         name    = 'statsHUDRoot',
@@ -118,13 +175,20 @@ local function NewStatsHUD()
             align      = ui.ALIGNMENT.Start,
             autoSize   = true,
         },
-        content = ui.content {
-            self._heartHealth:getElement().layout,
-            self._fatigueBar.elem.layout,
-            self._magickaBar.elem.layout,
-            self._chargesBar.elem.layout,
-        },
+        content = ui.content {},
     })
+
+    rebuildContent(self)
+    self._elem:update()
+
+    -- Watch for the hearts setting being toggled.
+    settings.ui.subscribe(async:callback(function(section, key)
+        if key == 'hearts' then
+            self._useHearts = settings.ui.hearts
+            rebuildContent(self)
+            self._elem:update()
+        end
+    end))
 
     return self
 end
@@ -156,17 +220,18 @@ local function itemMaxCharges(item)
     }
 end
 
-local paddingLayout = {
-    name = 'padWidget',
-    props = { size = util.vector2(math.max(1, 4 * math.ceil(settings.ui.scaling)), math.max(1, 4 * math.ceil(settings.ui.scaling))) },
-}
-
 --- Update every frame from your player_hud script.
 ---@param self           StatsHUD
 ---@param dt             number   elapsed seconds
 function StatsHUDMethods:onUpdate(dt)
-    self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
-    self._elem.layout.content[1] = self._heartHealth:getElement().layout
+    -- Update whichever health widget is currently active.
+    if self._useHearts then
+        self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
+    else
+        self._healthBar:onUpdate(dt,
+            healthStat.current / math.max(healthStat.base + healthStat.modifier, 1),
+            barSize(healthStat.base + healthStat.modifier))
+    end
 
     self._fatigueBar:onUpdate(dt, fatigueStat.current / math.max(fatigueStat.base + fatigueStat.modifier, 1),
         barSize(fatigueStat.base + fatigueStat.modifier))
@@ -200,21 +265,7 @@ function StatsHUDMethods:onUpdate(dt)
     if showMagickaBar ~= self._showMagickaBar or showChargesBar ~= self._showChargesBar then
         self._showMagickaBar = showMagickaBar
         self._showChargesBar = showChargesBar
-
-        local items = {
-            self._heartHealth:getElement().layout,
-            paddingLayout,
-            self._fatigueBar.elem.layout,
-            paddingLayout,
-        }
-        if showMagickaBar then
-            items[#items + 1] = self._magickaBar.elem.layout
-            items[#items + 1] = paddingLayout
-        end
-        if showChargesBar then
-            items[#items + 1] = self._chargesBar.elem.layout
-        end
-        self._elem.layout.content = ui.content(items)
+        rebuildContent(self)
     end
 
     self._elem:update()
