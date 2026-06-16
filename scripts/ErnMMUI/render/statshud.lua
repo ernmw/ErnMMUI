@@ -75,6 +75,7 @@ end
 ---@field _heartHealth   HeartHealth
 ---@field _healthBar     table   Bar object (used when settings.ui.hearts is false)
 ---@field _magickaStack table
+---@field _chargesStack table
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
 ---@field _chargesBar    table   Bar object
@@ -116,7 +117,11 @@ local function rebuildContent(self)
         end
     end
     if self._showChargesBar then
-        items[#items + 1] = self._chargesBar.elem.layout
+        if settings.ui.chargeIcons then
+            items[#items + 1] = self._chargesStack:getElement()
+        else
+            items[#items + 1] = self._chargesBar.elem.layout
+        end
     end
 
     self._elem.layout.content = ui.content(items)
@@ -129,6 +134,7 @@ local function NewStatsHUD()
         _heartHealth    = nil,
         _healthBar      = nil,
         _magickaStack   = nil,
+        _chargesStack   = nil,
         _fatigueBar     = nil,
         _magickaBar     = nil,
         _chargesBar     = nil,
@@ -149,6 +155,14 @@ local function NewStatsHUD()
         iconSize        = util.vector2(32, 32),
         initialCount    = 0,
         color           = settings.ui.colorMagicka,
+    })
+    self._chargesStack = iconstack.New({
+        atlasPath       = 'Textures/ErnMMUI/magicka.png',
+        atlasResolution = util.vector2(16, 16),
+        gridCols        = 1,
+        gridRows        = 1,
+        iconSize        = util.vector2(16, 16),
+        initialCount    = 0,
     })
 
     local makeBars = function()
@@ -199,7 +213,7 @@ local function NewStatsHUD()
     return self
 end
 
-local function itemMaxCharges(item)
+local function itemChargeInfo(item)
     if not item or not item:isValid() then
         return nil
     end
@@ -222,7 +236,8 @@ local function itemMaxCharges(item)
 
     return {
         current = data and data.enchantmentCharge or capacity,
-        max = capacity
+        max = capacity,
+        castCost = enchantUtil.getCastCost(enchantRecord)
     }
 end
 
@@ -244,18 +259,8 @@ function StatsHUDMethods:onUpdate(dt)
 
     local spellStance = types.Actor.getStance(pself) == types.Actor.STANCE.Spell
     local currentSpell = types.Actor.getSelectedSpell(pself)
-    local showMagickaBar = settings.ui.alwaysShowMagicka or
+    local showMagickaBar = (settings.ui.alwaysShowMagicka and not settings.ui.runes) or
         (spellStance and currentSpell and currentSpell.type == core.magic.SPELL_TYPE.Spell)
-
-    local chargeInfo
-    if types.Actor.getStance(pself) == types.Actor.STANCE.Weapon then
-        local rightHand = pself.type.getEquipment(pself, types.Actor.EQUIPMENT_SLOT.CarriedRight)
-        chargeInfo = itemMaxCharges(rightHand)
-    else
-        chargeInfo = itemMaxCharges(types.Actor.getSelectedEnchantedItem(pself))
-    end
-
-    local showChargesBar = chargeInfo ~= nil
 
     -- Only call onUpdate for bars that will be shown.
     if showMagickaBar then
@@ -268,9 +273,25 @@ function StatsHUDMethods:onUpdate(dt)
                 barSize(magickaStat.base + magickaStat.modifier))
         end
     end
+
+    local chargeInfo
+    if types.Actor.getStance(pself) == types.Actor.STANCE.Weapon then
+        local rightHand = pself.type.getEquipment(pself, types.Actor.EQUIPMENT_SLOT.CarriedRight)
+        chargeInfo = itemChargeInfo(rightHand)
+    else
+        chargeInfo = itemChargeInfo(types.Actor.getSelectedEnchantedItem(pself))
+    end
+
+    local showChargesBar = chargeInfo ~= nil
+
     if chargeInfo ~= nil then
-        self._chargesBar:onUpdate(dt, chargeInfo.current / chargeInfo.max,
-            barSize(chargeInfo.max))
+        if settings.ui.chargeIcons then
+            self._chargesStack:onUpdate(dt,
+                math.floor(math.floor(chargeInfo.current) / math.floor(math.max(1, chargeInfo.castCost))))
+        else
+            self._chargesBar:onUpdate(dt, chargeInfo.current / chargeInfo.max,
+                barSize(chargeInfo.max))
+        end
     end
 
     -- Rebuild root content only when visibility has changed.

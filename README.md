@@ -16,9 +16,8 @@ content=ErnMMUI.omwscripts
 ## Credits
 
 - HayghinDaedricFont by Georg A. Duffner & M. Millar -- https://github.com/mmillar-bolis/HayghinDaedricFont (OFL-1.1 license)
-- https://screamingbrainstudios.itch.io/seamless-space-backgrounds (CC0)
 - PCP myui by Qlonever (MIT)
-
+- SnoopthDuckDuck Things (CC0)
 
 ## random notes
 

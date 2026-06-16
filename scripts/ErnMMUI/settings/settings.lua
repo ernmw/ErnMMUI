@@ -105,6 +105,13 @@ local function init()
                 renderer = "checkbox"
             },
             {
+                key = "chargeIcons",
+                name = "chargeIcons_name",
+                description = "chargeIcons_description",
+                default = true,
+                renderer = "checkbox"
+            },
+            {
                 key = "alwaysShowMagicka",
                 name = "alwaysShowMagicka_name",
                 description = "alwaysShowMagicka_description",

@@ -160,9 +160,45 @@ local function getMaxEnchantmentCharge(enchantment)
     return enchantmentMaxChargeCache[enchantment.id]
 end
 
+local castCostCache = {}
+
+--- Calculate the charge cost per cast for an enchantment.
+--- This is the amount of charge consumed each time the enchantment is used.
+---
+--- For constant effect enchantments, the cost is 0 (they don't consume charge).
+--- For other types, the cost is the sum of all individual effect costs.
+---
+--- @param enchantment any The enchantment record (from core.magic.enchantments.records)
+--- @return number The charge cost per cast
+local function getCastCost(enchantment)
+    if not enchantment then
+        return 0
+    end
+
+    -- Constant effect enchantments never consume charge
+    if enchantment.type == core.magic.ENCHANTMENT_TYPE.ConstantEffect then
+        return 0
+    end
+
+    if castCostCache[enchantment.id] then
+        return castCostCache[enchantment.id]
+    end
+
+    local totalCost = 0
+
+    for _, effect in ipairs(enchantment.effects) do
+        totalCost = totalCost + getEffectCost(effect, enchantment.type)
+    end
+
+    -- Round to nearest integer, matching how OpenMW handles enchantment costs
+    castCostCache[enchantment.id] = math.floor(totalCost + 0.5)
+    return castCostCache[enchantment.id]
+end
+
 return {
     getMaxEnchantmentCharge = getMaxEnchantmentCharge,
     getChargeMultiplier = getChargeMultiplier,
     getEffectCost = getEffectCost,
     getMaxEnchantmentPoints = getMaxEnchantmentPoints,
+    getCastCost = getCastCost,
 }
