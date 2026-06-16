@@ -36,8 +36,10 @@ local function groupKey(groupName)
     return 'Settings/' .. MOD_NAME .. '/' .. groupName
 end
 
+local magickaType   = { "bar", "runes", "pips" }
+
 local adminGroupKey = groupKey("Admin")
-local uiGroupKey = groupKey("UI")
+local uiGroupKey    = groupKey("UI")
 
 local function init()
     interfaces.Settings.registerPage {
@@ -98,11 +100,12 @@ local function init()
                 renderer = "checkbox"
             },
             {
-                key = "runes",
-                name = "runes_name",
-                description = "runes_description",
-                default = true,
-                renderer = "checkbox"
+                key = "magickaType",
+                name = "magickaType_name",
+                description = "magickaType_description",
+                argument = { items = magickaType, l10n = MOD_NAME },
+                default = magickaType[1],
+                renderer = "select",
             },
             {
                 key = "chargeIcons",

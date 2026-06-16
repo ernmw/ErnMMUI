@@ -74,7 +74,8 @@ end
 ---@class StatsHUD
 ---@field _heartHealth   HeartHealth
 ---@field _healthBar     table   Bar object (used when settings.ui.hearts is false)
----@field _magickaStack table
+---@field _magickaRunesStack table
+---@field _magickaPipsStack table
 ---@field _chargesStack table
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
@@ -108,8 +109,11 @@ local function rebuildContent(self)
     items[#items + 1] = paddingLayout
 
     if self._showMagickaBar then
-        if settings.ui.runes then
-            items[#items + 1] = self._magickaStack:getElement()
+        if settings.ui.magickaType == "runes" then
+            items[#items + 1] = self._magickaRunesStack:getElement()
+            items[#items + 1] = paddingLayout
+        elseif settings.ui.magickaType == "pips" then
+            items[#items + 1] = self._magickaPipsStack:getElement()
             items[#items + 1] = paddingLayout
         else
             items[#items + 1] = self._magickaBar.elem.layout
@@ -131,23 +135,24 @@ end
 ---@return StatsHUD
 local function NewStatsHUD()
     local self = {
-        _heartHealth    = nil,
-        _healthBar      = nil,
-        _magickaStack   = nil,
-        _chargesStack   = nil,
-        _fatigueBar     = nil,
-        _magickaBar     = nil,
-        _chargesBar     = nil,
-        _elem           = nil,
-        _showMagickaBar = false,
-        _showChargesBar = false,
+        _heartHealth       = nil,
+        _healthBar         = nil,
+        _magickaRunesStack = nil,
+        _magickaPipsStack  = nil,
+        _chargesStack      = nil,
+        _fatigueBar        = nil,
+        _magickaBar        = nil,
+        _chargesBar        = nil,
+        _elem              = nil,
+        _showMagickaBar    = false,
+        _showChargesBar    = false,
     }
     setmetatable(self, StatsHUDMethods)
 
     -- Build child components.
     self._heartHealth = HeartHealth.New(healthStat.base + healthStat.modifier, healthStat.current)
 
-    self._magickaStack = iconstack.New({
+    self._magickaRunesStack = iconstack.New({
         atlasPath       = 'Textures/ErnMMUI/daedric.dds',
         atlasResolution = util.vector2(128, 128),
         gridCols        = 4,
@@ -156,8 +161,17 @@ local function NewStatsHUD()
         initialCount    = 0,
         color           = settings.ui.colorMagicka,
     })
-    self._chargesStack = iconstack.New({
+    self._magickaPipsStack = iconstack.New({
         atlasPath       = 'Textures/ErnMMUI/magicka.png',
+        atlasResolution = util.vector2(16, 16),
+        gridCols        = 1,
+        gridRows        = 1,
+        iconSize        = util.vector2(16, 16),
+        initialCount    = 0,
+    })
+
+    self._chargesStack = iconstack.New({
+        atlasPath       = 'Textures/ErnMMUI/charges.png',
         atlasResolution = util.vector2(16, 16),
         gridCols        = 1,
         gridRows        = 1,
@@ -259,18 +273,24 @@ function StatsHUDMethods:onUpdate(dt)
 
     local spellStance = types.Actor.getStance(pself) == types.Actor.STANCE.Spell
     local currentSpell = types.Actor.getSelectedSpell(pself)
-    local showMagickaBar = (settings.ui.alwaysShowMagicka and not settings.ui.runes) or
+    local showMagickaBar = (settings.ui.alwaysShowMagicka and settings.ui.magickaType == "bar") or
         (spellStance and currentSpell and currentSpell.type == core.magic.SPELL_TYPE.Spell)
 
     -- Only call onUpdate for bars that will be shown.
     if showMagickaBar then
-        if settings.ui.runes then
-            local cost = spellUtil.calculateSpellCost(currentSpell)
-            self._magickaStack:onUpdate(dt,
-                math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, cost))))
-        else
+        if settings.ui.magickaType == "bar" then
             self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
                 barSize(magickaStat.base + magickaStat.modifier))
+        elseif settings.ui.magickaType == "runes" then
+            local cost = spellUtil.calculateSpellCost(currentSpell)
+            self._magickaRunesStack:onUpdate(dt,
+                math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, cost))))
+        elseif settings.ui.magickaType == "pips" then
+            local cost = spellUtil.calculateSpellCost(currentSpell)
+            self._magickaPipsStack:onUpdate(dt,
+                math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, cost))))
+        else
+
         end
     end
 
