@@ -98,6 +98,13 @@ local function init()
                 renderer = "checkbox"
             },
             {
+                key = "runes",
+                name = "runes_name",
+                description = "runes_description",
+                default = true,
+                renderer = "checkbox"
+            },
+            {
                 key = "alwaysShowMagicka",
                 name = "alwaysShowMagicka_name",
                 description = "alwaysShowMagicka_description",

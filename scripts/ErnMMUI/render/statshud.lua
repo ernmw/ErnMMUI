@@ -24,6 +24,7 @@ local Bar         = require('scripts.ErnMMUI.render.bar')
 local core        = require("openmw.core")
 local settings    = require("scripts.ErnMMUI.settings.settings")
 local enchantUtil = require("scripts.ErnMMUI.enchantutil")
+local spellUtil   = require("scripts.ErnMMUI.spellutil")
 local pself       = require('openmw.self')
 local types       = require('openmw.types')
 local async       = require('openmw.async')
@@ -73,7 +74,6 @@ end
 ---@class StatsHUD
 ---@field _heartHealth   HeartHealth
 ---@field _healthBar     table   Bar object (used when settings.ui.hearts is false)
----@field _useHearts     boolean mirrors settings.ui.hearts; drives which widget is active
 ---@field _magickaStack table
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
@@ -96,7 +96,7 @@ local function rebuildContent(self)
     local items = {}
 
     -- Health: heart widget or bar depending on the setting.
-    if self._useHearts then
+    if settings.ui.hearts then
         items[#items + 1] = self._heartHealth:getElement().layout
     else
         items[#items + 1] = self._healthBar.elem.layout
@@ -107,11 +107,13 @@ local function rebuildContent(self)
     items[#items + 1] = paddingLayout
 
     if self._showMagickaBar then
-        items[#items + 1] = self._magickaBar.elem.layout
-        items[#items + 1] = paddingLayout
-
-        items[#items + 1] = self._magickaStack:getElement()
-        items[#items + 1] = paddingLayout
+        if settings.ui.runes then
+            items[#items + 1] = self._magickaStack:getElement()
+            items[#items + 1] = paddingLayout
+        else
+            items[#items + 1] = self._magickaBar.elem.layout
+            items[#items + 1] = paddingLayout
+        end
     end
     if self._showChargesBar then
         items[#items + 1] = self._chargesBar.elem.layout
@@ -126,7 +128,6 @@ local function NewStatsHUD()
     local self = {
         _heartHealth    = nil,
         _healthBar      = nil,
-        _useHearts      = settings.ui.hearts,
         _magickaStack   = nil,
         _fatigueBar     = nil,
         _magickaBar     = nil,
@@ -147,6 +148,7 @@ local function NewStatsHUD()
         gridRows        = 4,
         iconSize        = util.vector2(32, 32),
         initialCount    = 0,
+        color           = settings.ui.colorMagicka,
     })
 
     local makeBars = function()
@@ -189,9 +191,6 @@ local function NewStatsHUD()
 
     -- Watch for the hearts setting being toggled.
     settings.ui.subscribe(async:callback(function(section, key)
-        if key == 'hearts' then
-            self._useHearts = settings.ui.hearts
-        end
         makeBars()
         rebuildContent(self)
         self._elem:update()
@@ -232,7 +231,7 @@ end
 ---@param dt             number   elapsed seconds
 function StatsHUDMethods:onUpdate(dt)
     -- Update whichever health widget is currently active.
-    if self._useHearts then
+    if settings.ui.hearts then
         self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
     else
         self._healthBar:onUpdate(dt,
@@ -260,12 +259,14 @@ function StatsHUDMethods:onUpdate(dt)
 
     -- Only call onUpdate for bars that will be shown.
     if showMagickaBar then
-        self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
-            barSize(magickaStat.base + magickaStat.modifier))
-
-
-        self._magickaStack:onUpdate(dt,
-            math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, currentSpell.cost))))
+        if settings.ui.runes then
+            local cost = spellUtil.calculateSpellCost(currentSpell)
+            self._magickaStack:onUpdate(dt,
+                math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, cost))))
+        else
+            self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
+                barSize(magickaStat.base + magickaStat.modifier))
+        end
     end
     if chargeInfo ~= nil then
         self._chargesBar:onUpdate(dt, chargeInfo.current / chargeInfo.max,

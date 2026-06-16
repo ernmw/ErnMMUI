@@ -74,7 +74,7 @@ local paddingLayout = {
     props = { size = util.vector2(ICON_PADDING, ICON_PADDING) },
 }
 
-local function buildLayout(slots, textures, iconSize)
+local function buildLayout(slots, textures, iconSize, color)
     local rowLayouts = {}
     local idx        = 1
     local total      = #slots
@@ -94,6 +94,7 @@ local function buildLayout(slots, textures, iconSize)
                     size     = iconSize,
                     resource = textures[slot.textureIdx],
                     alpha    = alpha,
+                    color    = color
                 },
             }
             rowChildren[#rowChildren + 1] = paddingLayout
@@ -171,10 +172,11 @@ local function NewIconStack(opts)
         _textureCount = textureCount,
         _iconSize     = iconSize,
         _elem         = nil,
+        _color        = opts.color
     }
     setmetatable(self, IconStackMethods)
 
-    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconSize))
+    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconSize, self._color))
     return self
 end
 
@@ -259,7 +261,7 @@ function IconStackMethods:onUpdate(dt, iconCount)
     -- -----------------------------------------------------------------------
     -- 3. Rebuild and push updated layout.
     -- -----------------------------------------------------------------------
-    local newLayout           = buildLayout(slots, self._textures, self._iconSize)
+    local newLayout           = buildLayout(slots, self._textures, self._iconSize, self._color)
     self._elem.layout.content = newLayout.content
     self._elem:update()
 end
