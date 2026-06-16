@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local ui          = require('openmw.ui')
 local util        = require('openmw.util')
 local HeartHealth = require('scripts.ErnMMUI.render.hearthealth')
+local iconstack   = require('scripts.ErnMMUI.render.iconstack')
 local Bar         = require('scripts.ErnMMUI.render.bar')
 local core        = require("openmw.core")
 local settings    = require("scripts.ErnMMUI.settings.settings")
@@ -73,6 +74,7 @@ end
 ---@field _heartHealth   HeartHealth
 ---@field _healthBar     table   Bar object (used when settings.ui.hearts is false)
 ---@field _useHearts     boolean mirrors settings.ui.hearts; drives which widget is active
+---@field _magickaStack table
 ---@field _fatigueBar    table   Bar object
 ---@field _magickaBar    table   Bar object
 ---@field _chargesBar    table   Bar object
@@ -107,6 +109,9 @@ local function rebuildContent(self)
     if self._showMagickaBar then
         items[#items + 1] = self._magickaBar.elem.layout
         items[#items + 1] = paddingLayout
+
+        items[#items + 1] = self._magickaStack:getElement()
+        items[#items + 1] = paddingLayout
     end
     if self._showChargesBar then
         items[#items + 1] = self._chargesBar.elem.layout
@@ -122,6 +127,7 @@ local function NewStatsHUD()
         _heartHealth    = nil,
         _healthBar      = nil,
         _useHearts      = settings.ui.hearts,
+        _magickaStack   = nil,
         _fatigueBar     = nil,
         _magickaBar     = nil,
         _chargesBar     = nil,
@@ -133,6 +139,15 @@ local function NewStatsHUD()
 
     -- Build child components.
     self._heartHealth = HeartHealth.New(healthStat.base + healthStat.modifier, healthStat.current)
+
+    self._magickaStack = iconstack.New({
+        atlasPath       = 'Textures/ErnMMUI/daedric.dds',
+        atlasResolution = util.vector2(128, 128),
+        gridCols        = 4,
+        gridRows        = 4,
+        iconSize        = util.vector2(32, 32),
+        initialCount    = 0,
+    })
 
     local makeBars = function()
         updateFlashColors()
@@ -247,6 +262,10 @@ function StatsHUDMethods:onUpdate(dt)
     if showMagickaBar then
         self._magickaBar:onUpdate(dt, magickaStat.current / math.max(magickaStat.base + magickaStat.modifier, 1),
             barSize(magickaStat.base + magickaStat.modifier))
+
+
+        self._magickaStack:onUpdate(dt,
+            math.floor(math.floor(magickaStat.current) / math.floor(math.max(1, currentSpell.cost))))
     end
     if chargeInfo ~= nil then
         self._chargesBar:onUpdate(dt, chargeInfo.current / chargeInfo.max,
