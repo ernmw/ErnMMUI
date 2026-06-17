@@ -105,6 +105,7 @@ end
 function BarFunctions.reset(self, newRatio)
     self.ratio = newRatio or 0
     self.flashRatio = 0
+    setRatio(self.elem, self.ratio, self.flashRatio)
     self.elem:update()
 end
 
@@ -112,7 +113,7 @@ function BarFunctions.onUpdate(self, dt, newRatio, size)
     local changed = false
     if newRatio ~= self.ratio then
         if newRatio < self.ratio then
-            self.flashRatio = util.clamp(self.flashRatio + self.ratio - newRatio, 0, 1 - self.ratio)
+            self.flashRatio = util.clamp(self.flashRatio + self.ratio - newRatio, 0, 1 - newRatio)
         end
         self.ratio = newRatio
         changed = true

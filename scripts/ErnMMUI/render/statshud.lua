@@ -61,12 +61,8 @@ updateFlashColors()
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
-
-
-local WHITE = util.color.rgba(1, 1, 1, 1)
-
-local function shimmerFn(baseColor, iconSpacing, sharpness)
-    baseColor   = baseColor or WHITE
+local function shimmerFn(baseColor, shimmerColor, iconSpacing, sharpness)
+    baseColor   = baseColor
     iconSpacing = iconSpacing or 0.08 -- seconds of travel between adjacent icons
     sharpness   = sharpness or 6      -- higher = narrower bright peak
 
@@ -80,7 +76,7 @@ local function shimmerFn(baseColor, iconSpacing, sharpness)
         -- icon is near baseColor for most of the cycle and only briefly white.
         local t = ((math.sin(phase * 2 * math.pi) + 1) * 0.5) ^ sharpness
 
-        return { color = lerpColor(baseColor, WHITE, t) }
+        return { color = lerpColor(baseColor, shimmerColor, t) }
     end
 end
 
@@ -187,7 +183,7 @@ local function NewStatsHUD()
         iconSize        = util.vector2(32, 32),
         initialCount    = 0,
         color           = settings.ui.colorMagicka,
-        iconUpdateFn    = shimmerFn(settings.ui.colorMagicka),
+        iconUpdateFn    = shimmerFn(settings.ui.colorMagicka, FLASH_MAGICKA),
     })
     self._magickaPipsStack = iconstack.New({
         atlasPath       = 'Textures/ErnMMUI/magicka.png',
