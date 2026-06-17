@@ -28,7 +28,6 @@ local async         = require('openmw.async')
 
 local FADE_DURATION = 0.2                -- seconds for a removed icon to fade to invisible
 local ICON_PADDING  = util.vector2(2, 2) -- px gap between icons
-local ICONS_PER_ROW = 10                 -- wrap after this many icons
 
 -- ---------------------------------------------------------------------------
 -- Atlas helpers
@@ -81,7 +80,10 @@ local function uniformBarLength()
     return (const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling
 end
 
-local function buildLayout(slots, textures, iconSize, color)
+-- iconUpdateFn : function(index, elapsed) -> table of extra props, or nil.
+--   Returned fields are merged over the slot's default props.  Passing nil
+--   for iconUpdateFn reproduces the original behaviour exactly.
+local function buildLayout(slots, textures, iconSize, color, iconUpdateFn, elapsed)
     local rowLayouts = {}
     local idx        = 1
     local total      = #slots
@@ -90,19 +92,32 @@ local function buildLayout(slots, textures, iconSize, color)
         local rowChildren = {}
         for _ = 1, math.ceil(uniformBarLength() / (iconSize.x + ICON_PADDING.x)) do
             if idx > total then break end
-            local slot                    = slots[idx]
-            local alpha                   = slot.fading
+            local slot  = slots[idx]
+            local alpha = slot.fading
                 and math.max(0, slot.fadeTimer / FADE_DURATION)
                 or 1
 
+            -- Base props — identical to original when no iconUpdateFn is set.
+            local props = {
+                size     = iconSize,
+                resource = textures[slot.textureIdx],
+                alpha    = alpha,
+                color    = color,
+            }
+
+            -- Merge any per-icon overrides supplied by the caller.
+            if iconUpdateFn then
+                local overrides = iconUpdateFn(idx, elapsed)
+                if overrides then
+                    for k, v in pairs(overrides) do
+                        props[k] = v
+                    end
+                end
+            end
+
             rowChildren[#rowChildren + 1] = {
                 type  = ui.TYPE.Image,
-                props = {
-                    size     = iconSize,
-                    resource = textures[slot.textureIdx],
-                    alpha    = alpha,
-                    color    = color
-                },
+                props = props,
             }
             rowChildren[#rowChildren + 1] = paddingLayout
             idx                           = idx + 1
@@ -184,7 +199,11 @@ local function NewIconStack(opts)
         _iconScaledSized = iconSize * settings.ui.scaling,
         _iconSize        = iconSize,
         _elem            = nil,
-        _color           = opts.color
+        _color           = opts.color,
+        -- Optional per-icon update function: function(index, elapsed) -> props table or nil.
+        -- Returned fields (e.g. color, alpha) are merged over the slot's default props.
+        _iconUpdateFn    = opts.iconUpdateFn or nil,
+        _elapsed         = 0,
     }
     setmetatable(self, IconStackMethods)
 
@@ -192,12 +211,14 @@ local function NewIconStack(opts)
         self._iconScaledSized = iconSize * settings.ui.scaling
     end))
 
-    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconScaledSized, self._color))
+    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconScaledSized, self._color,
+        self._iconUpdateFn, self._elapsed))
     return self
 end
 
 function IconStackMethods:onUpdate(dt, iconCount, iconScale)
     iconCount       = math.max(0, iconCount)
+    self._elapsed   = self._elapsed + dt
 
     local slots     = self._slots
     local liveCount = self._liveCount
@@ -277,7 +298,8 @@ function IconStackMethods:onUpdate(dt, iconCount, iconScale)
     -- -----------------------------------------------------------------------
     -- 3. Rebuild and push updated layout.
     -- -----------------------------------------------------------------------
-    local newLayout           = buildLayout(slots, self._textures, self._iconScaledSized, self._color)
+    local newLayout           = buildLayout(slots, self._textures, self._iconScaledSized, self._color, self
+        ._iconUpdateFn, self._elapsed)
     self._elem.layout.content = newLayout.content
     self._elem:update()
 end
@@ -294,5 +316,5 @@ function IconStackMethods:getElement()
 end
 
 return {
-    New = NewIconStack,
+    New = NewIconStack
 }

@@ -61,6 +61,28 @@ updateFlashColors()
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
+
+local WHITE = util.color.rgba(1, 1, 1, 1)
+
+local function shimmerFn(baseColor, spreadIcons)
+    baseColor   = baseColor or WHITE
+    spreadIcons = spreadIcons or 4
+
+    return function(index, elapsed)
+        -- Phase for this icon: offset each icon by (1/spreadIcons) of the
+        -- cycle so the crest sweeps left-to-right.
+        -- elapsed drives the global wave; subtracting the icon offset makes
+        -- the peak travel rightward as time increases.
+        local phase = elapsed - (index - 1) / spreadIcons
+
+        -- sin oscillates -1..1; map to 0..1 so t=0 is baseColor, t=1 is white.
+        local t = (math.sin(phase * 2 * math.pi) + 1) * 0.5
+
+        return { color = lerpColor(baseColor, FLASH_MAGICKA, t) }
+    end
+end
+
+
 local function uniformBarLength()
     return (const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling
 end
@@ -163,6 +185,7 @@ local function NewStatsHUD()
         iconSize        = util.vector2(32, 32),
         initialCount    = 0,
         color           = settings.ui.colorMagicka,
+        iconUpdateFn    = shimmerFn(settings.ui.colorMagicka, 10),
     })
     self._magickaPipsStack = iconstack.New({
         atlasPath       = 'Textures/ErnMMUI/magicka.png',
