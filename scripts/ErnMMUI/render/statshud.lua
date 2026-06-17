@@ -62,13 +62,12 @@ updateFlashColors()
 -- ---------------------------------------------------------------------------
 
 local function uniformBarLength()
-    return util.vector2((const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling,
-        const.BAR_HEIGHT * settings.ui.scaling)
+    return (const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling
 end
 
 local function barSize(max)
     if settings.ui.uniformBarLength then
-        return uniformBarLength()
+        return util.vector2(uniformBarLength(), const.BAR_HEIGHT * settings.ui.scaling)
     else
         return util.vector2(const.BAR_LENGTH_FACTOR * math.sqrt(max) * settings.ui.scaling,
             const.BAR_HEIGHT * settings.ui.scaling)

@@ -89,7 +89,7 @@ end
 
 local paddingLayout = {
     name = 'padWidget',
-    props = { size = util.vector2(math.max(const.HEART_PADDING, math.ceil(settings.ui.scaling)), math.max(const.HEART_PADDING, math.ceil(settings.ui.scaling))) },
+    props = { size = util.vector2(const.HEART_PADDING * settings.ui.scaling, const.HEART_PADDING * settings.ui.scaling) },
     external = { grow = 1 }
 }
 

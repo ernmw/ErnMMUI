@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local ui            = require('openmw.ui')
 local util          = require('openmw.util')
 local settings      = require("scripts.ErnMMUI.settings.settings")
+local const         = require("scripts.ErnMMUI.render.const")
 local async         = require('openmw.async')
 
 -- ---------------------------------------------------------------------------
@@ -73,8 +74,12 @@ end
 
 local paddingLayout = {
     name  = 'padWidget',
-    props = { size = ICON_PADDING },
+    props = { size = ICON_PADDING * settings.ui.scaling },
 }
+
+local function uniformBarLength()
+    return (const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling
+end
 
 local function buildLayout(slots, textures, iconSize, color)
     local rowLayouts = {}
@@ -83,7 +88,7 @@ local function buildLayout(slots, textures, iconSize, color)
 
     while idx <= total do
         local rowChildren = {}
-        for _ = 1, math.ceil(ICONS_PER_ROW * 34 / (iconSize.x + ICON_PADDING.x) * settings.ui.scaling) do
+        for _ = 1, math.ceil(uniformBarLength() / (iconSize.x + ICON_PADDING.x)) do
             if idx > total then break end
             local slot                    = slots[idx]
             local alpha                   = slot.fading
