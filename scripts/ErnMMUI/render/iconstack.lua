@@ -18,14 +18,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local ui            = require('openmw.ui')
 local util          = require('openmw.util')
+local settings      = require("scripts.ErnMMUI.settings.settings")
+local async         = require('openmw.async')
 
 -- ---------------------------------------------------------------------------
 -- Constants
 -- ---------------------------------------------------------------------------
 
-local FADE_DURATION = 0.2 -- seconds for a removed icon to fade to invisible
-local ICON_PADDING  = 2   -- px gap between icons
-local ICONS_PER_ROW = 10  -- wrap after this many icons
+local FADE_DURATION = 0.2                -- seconds for a removed icon to fade to invisible
+local ICON_PADDING  = util.vector2(2, 2) -- px gap between icons
+local ICONS_PER_ROW = 10                 -- wrap after this many icons
 
 -- ---------------------------------------------------------------------------
 -- Atlas helpers
@@ -71,7 +73,7 @@ end
 
 local paddingLayout = {
     name  = 'padWidget',
-    props = { size = util.vector2(ICON_PADDING, ICON_PADDING) },
+    props = { size = ICON_PADDING },
 }
 
 local function buildLayout(slots, textures, iconSize, color)
@@ -81,7 +83,7 @@ local function buildLayout(slots, textures, iconSize, color)
 
     while idx <= total do
         local rowChildren = {}
-        for _ = 1, ICONS_PER_ROW do
+        for _ = 1, math.ceil(ICONS_PER_ROW * 34 / (iconSize.x + ICON_PADDING.x) * settings.ui.scaling) do
             if idx > total then break end
             local slot                    = slots[idx]
             local alpha                   = slot.fading
@@ -102,15 +104,19 @@ local function buildLayout(slots, textures, iconSize, color)
         end
 
         rowLayouts[#rowLayouts + 1] = {
-            type    = ui.TYPE.Flex,
-            props   = {
+            type     = ui.TYPE.Flex,
+            props    = {
                 horizontal = true,
                 arrange    = ui.ALIGNMENT.Start,
                 align      = ui.ALIGNMENT.Start,
                 autoSize   = true,
             },
-            content = ui.content(rowChildren),
+            external = {
+                grow = 1,
+            },
+            content  = ui.content(rowChildren),
         }
+        rowLayouts[#rowLayouts + 1] = paddingLayout
     end
 
     return {
@@ -153,7 +159,7 @@ local function NewIconStack(opts)
 
     local cellW        = opts.atlasResolution.x / cols
     local cellH        = opts.atlasResolution.y / rows
-    local iconSize     = opts.iconSize or util.vector2(cellW, cellH)
+    local iconSize     = util.vector2(cellW, cellH)
 
     local slots        = {}
     local initCount    = opts.initialCount or 0
@@ -166,21 +172,26 @@ local function NewIconStack(opts)
     end
 
     local self = {
-        _slots        = slots,
-        _liveCount    = initCount,
-        _textures     = textures,
-        _textureCount = textureCount,
-        _iconSize     = iconSize,
-        _elem         = nil,
-        _color        = opts.color
+        _slots           = slots,
+        _liveCount       = initCount,
+        _textures        = textures,
+        _textureCount    = textureCount,
+        _iconScaledSized = iconSize * settings.ui.scaling,
+        _iconSize        = iconSize,
+        _elem            = nil,
+        _color           = opts.color
     }
     setmetatable(self, IconStackMethods)
 
-    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconSize, self._color))
+    settings.ui.subscribe(async:callback(function(section, key)
+        self._iconScaledSized = iconSize * settings.ui.scaling
+    end))
+
+    self._elem = ui.create(buildLayout(self._slots, self._textures, self._iconScaledSized, self._color))
     return self
 end
 
-function IconStackMethods:onUpdate(dt, iconCount)
+function IconStackMethods:onUpdate(dt, iconCount, iconScale)
     iconCount       = math.max(0, iconCount)
 
     local slots     = self._slots
@@ -261,7 +272,7 @@ function IconStackMethods:onUpdate(dt, iconCount)
     -- -----------------------------------------------------------------------
     -- 3. Rebuild and push updated layout.
     -- -----------------------------------------------------------------------
-    local newLayout           = buildLayout(slots, self._textures, self._iconSize, self._color)
+    local newLayout           = buildLayout(slots, self._textures, self._iconScaledSized, self._color)
     self._elem.layout.content = newLayout.content
     self._elem:update()
 end

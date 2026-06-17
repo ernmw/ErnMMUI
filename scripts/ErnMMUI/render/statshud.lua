@@ -61,10 +61,14 @@ updateFlashColors()
 -- StatsHUD
 -- ---------------------------------------------------------------------------
 
+local function uniformBarLength()
+    return util.vector2((const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling,
+        const.BAR_HEIGHT * settings.ui.scaling)
+end
+
 local function barSize(max)
     if settings.ui.uniformBarLength then
-        return util.vector2((const.HEART_SIZE + const.HEART_PADDING) * const.HEARTS_PER_ROW * settings.ui.scaling,
-            const.BAR_HEIGHT * settings.ui.scaling)
+        return uniformBarLength()
     else
         return util.vector2(const.BAR_LENGTH_FACTOR * math.sqrt(max) * settings.ui.scaling,
             const.BAR_HEIGHT * settings.ui.scaling)
@@ -98,7 +102,7 @@ local function rebuildContent(self)
     local items = {}
 
     -- Health: heart widget or bar depending on the setting.
-    if settings.ui.hearts then
+    if settings.ui.healthType == "hearts" then
         items[#items + 1] = self._heartHealth:getElement().layout
     else
         items[#items + 1] = self._healthBar.elem.layout
@@ -121,7 +125,7 @@ local function rebuildContent(self)
         end
     end
     if self._showChargesBar then
-        if settings.ui.chargeIcons then
+        if settings.ui.chargesType == "pips" then
             items[#items + 1] = self._chargesStack:getElement()
         else
             items[#items + 1] = self._chargesBar.elem.layout
@@ -260,7 +264,7 @@ end
 ---@param dt             number   elapsed seconds
 function StatsHUDMethods:onUpdate(dt)
     -- Update whichever health widget is currently active.
-    if settings.ui.hearts then
+    if settings.ui.healthType == "hearts" then
         self._heartHealth:onUpdate(dt, healthStat.current, healthStat.base + healthStat.modifier)
     else
         self._healthBar:onUpdate(dt,
@@ -305,7 +309,7 @@ function StatsHUDMethods:onUpdate(dt)
     local showChargesBar = chargeInfo ~= nil
 
     if chargeInfo ~= nil then
-        if settings.ui.chargeIcons then
+        if settings.ui.chargesType == "pips" then
             self._chargesStack:onUpdate(dt,
                 math.floor(math.floor(chargeInfo.current) / math.floor(math.max(1, chargeInfo.castCost))))
         else

@@ -37,6 +37,8 @@ local function groupKey(groupName)
 end
 
 local magickaType   = { "bar", "runes", "pips" }
+local chargesType   = { "bar", "pips" }
+local healthType    = { "bar", "hearts" }
 
 local adminGroupKey = groupKey("Admin")
 local uiGroupKey    = groupKey("UI")
@@ -93,11 +95,12 @@ local function init()
                 }
             },
             {
-                key = "hearts",
-                name = "hearts_name",
-                description = "hearts_description",
-                default = true,
-                renderer = "checkbox"
+                key = "healthType",
+                name = "healthType_name",
+                description = "healthType_description",
+                argument = { items = healthType, l10n = MOD_NAME },
+                default = healthType[1],
+                renderer = "select",
             },
             {
                 key = "magickaType",
@@ -108,11 +111,12 @@ local function init()
                 renderer = "select",
             },
             {
-                key = "chargeIcons",
-                name = "chargeIcons_name",
-                description = "chargeIcons_description",
-                default = true,
-                renderer = "checkbox"
+                key = "chargesType",
+                name = "chargesType_name",
+                description = "chargesType_description",
+                argument = { items = chargesType, l10n = MOD_NAME },
+                default = chargesType[1],
+                renderer = "select",
             },
             {
                 key = "alwaysShowMagicka",
