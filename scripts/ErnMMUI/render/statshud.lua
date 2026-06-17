@@ -62,23 +62,25 @@ updateFlashColors()
 -- ---------------------------------------------------------------------------
 
 
+
 local WHITE = util.color.rgba(1, 1, 1, 1)
 
-local function shimmerFn(baseColor, spreadIcons)
+local function shimmerFn(baseColor, iconSpacing, sharpness)
     baseColor   = baseColor or WHITE
-    spreadIcons = spreadIcons or 4
+    iconSpacing = iconSpacing or 0.08 -- seconds of travel between adjacent icons
+    sharpness   = sharpness or 6      -- higher = narrower bright peak
 
     return function(index, elapsed)
-        -- Phase for this icon: offset each icon by (1/spreadIcons) of the
-        -- cycle so the crest sweeps left-to-right.
-        -- elapsed drives the global wave; subtracting the icon offset makes
-        -- the peak travel rightward as time increases.
-        local phase = elapsed - (index - 1) / spreadIcons
+        -- Each icon is delayed by iconSpacing seconds relative to its left neighbour,
+        -- so the highlight crest travels rightward at (1/iconSpacing) icons/second.
+        -- The wave completes one full cycle every 1 second (2π period).
+        local phase = elapsed - (index - 1) * iconSpacing
 
-        -- sin oscillates -1..1; map to 0..1 so t=0 is baseColor, t=1 is white.
-        local t = (math.sin(phase * 2 * math.pi) + 1) * 0.5
+        -- Narrow the peak: sin maps to 0..1, then raise to `sharpness` so the
+        -- icon is near baseColor for most of the cycle and only briefly white.
+        local t = ((math.sin(phase * 2 * math.pi) + 1) * 0.5) ^ sharpness
 
-        return { color = lerpColor(baseColor, FLASH_MAGICKA, t) }
+        return { color = lerpColor(baseColor, WHITE, t) }
     end
 end
 
@@ -185,7 +187,7 @@ local function NewStatsHUD()
         iconSize        = util.vector2(32, 32),
         initialCount    = 0,
         color           = settings.ui.colorMagicka,
-        iconUpdateFn    = shimmerFn(settings.ui.colorMagicka, 10),
+        iconUpdateFn    = shimmerFn(settings.ui.colorMagicka),
     })
     self._magickaPipsStack = iconstack.New({
         atlasPath       = 'Textures/ErnMMUI/magicka.png',
