@@ -134,7 +134,7 @@ function EnemyListMethods:setEnemies(enemyList)
     -- Fill free slots with new enemies, in the order given, lowest free slot first.
     local slotIdx = 1
     for _, enemy in ipairs(enemyList) do
-        if not alreadyAssigned[enemy] then
+        if not alreadyAssigned[enemy] and enemy and enemy:isValid() then
             -- find the next free slot
             while slotIdx <= MAX_ENEMY_SLOTS and self._slots[slotIdx] and self._slots[slotIdx]:getEnemyObject() do
                 slotIdx = slotIdx + 1

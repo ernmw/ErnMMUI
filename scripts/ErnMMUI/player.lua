@@ -15,16 +15,31 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
-local ui       = require('openmw.ui')
-local util     = require('openmw.util')
-local margin   = require("scripts.ErnMMUI.render.margin")
-local statsHud = require('scripts.ErnMMUI.render.statshud')
+local ui                      = require('openmw.ui')
+local util                    = require('openmw.util')
+local core                    = require('openmw.core')
+local pself                   = require('openmw.self')
+local types                   = require('openmw.types')
+local margin                  = require("scripts.ErnMMUI.render.margin")
+local statsHud                = require('scripts.ErnMMUI.render.statshud')
+local enemylist               = require('scripts.ErnMMUI.render.enemylist')
 
+local MAX_VISIBLE_ENEMIES     = 4
+-- An enemy that falls out of the closest-N set must stay outside it for this
+-- many seconds before it's actually dropped from the visible list. This
+-- avoids flicker when two enemies are near-equidistant and jockeying for
+-- the last visible slot.
+local BUMP_STICKINESS_SECONDS = 1.0
 
-local combatTracker = {}
+local combatTracker           = {}
+-- id -> seconds remaining before a bumped-but-still-in-combat enemy is
+-- actually dropped from the visible list. Only holds entries for enemies
+-- that are currently visible but no longer rank in the true closest-N set.
+local bumpTimers              = {}
 
 
 local hud = statsHud.New()
+local enemyList = enemylist.New()
 
 
 local root = ui.create {
@@ -37,12 +52,124 @@ local root = ui.create {
         anchor = util.vector2(0, 0),
     },
     content = ui.content {
-        margin.addMarginLayout(hud:getElement(), 5)
+        margin.addMarginLayout(hud:getElement(), 5),
+        {
+            name = 'enemyListAnchor',
+            type = ui.TYPE.Widget,
+            props = {
+                -- top-center of the screen
+                relativePosition = util.vector2(0.5, 0),
+                anchor = util.vector2(0.5, 0),
+            },
+            content = ui.content {
+                margin.addMarginLayout(enemyList:getElement(), 5)
+            }
+        }
     }
 }
 
+-- The set of enemies actually shown last frame (array of GameObjects).
+local currentlyVisible = {}
+
+--- Returns all valid, living combat-tracked enemies, nearest-to-the-player
+--- first. Prunes combatTracker of any entry that's no longer valid (e.g.
+--- died without a clean OMWMusicCombatTargetsChanged removal, or unloaded).
+local function rankEnemiesByDistance()
+    local playerPos = pself.position
+    local candidates = {}
+
+    for id, enemy in pairs(combatTracker) do
+        if enemy and enemy:isValid() and not types.Actor.isDead(enemy) then
+            candidates[#candidates + 1] = enemy
+        else
+            combatTracker[id] = nil
+        end
+    end
+
+    table.sort(candidates, function(a, b)
+        return (a.position - playerPos):length() < (b.position - playerPos):length()
+    end)
+
+    return candidates
+end
+
+--- Picks which enemies should be visible this frame, applying a stickiness
+--- buffer: an enemy already on screen keeps its spot for
+--- BUMP_STICKINESS_SECONDS after it falls out of the true closest-N set
+--- before it's actually dropped. This avoids flicker when enemies are
+--- near-equidistant and swapping rank from frame to frame.
+---
+--- The visible set is still capped at MAX_VISIBLE_ENEMIES overall: a sticky
+--- enemy occupies one of the slots (rather than being added on top of a
+--- full true-closest set), so newly-promoted enemies only actually appear
+--- once they out-rank enough non-sticky, non-true-closest contenders to
+--- earn a slot.
+---@param dt number elapsed seconds
+local function getClosestEnemies(dt)
+    local ranked = rankEnemiesByDistance()
+    local rankOf = {}
+    for i, enemy in ipairs(ranked) do
+        rankOf[enemy.id] = i
+    end
+
+    local trueClosest = {}
+    for i = 1, math.min(MAX_VISIBLE_ENEMIES, #ranked) do
+        trueClosest[ranked[i].id] = true
+    end
+
+    -- Carry over any previously-visible enemy that's still a valid combat
+    -- target, ticking down its bump timer if it's fallen out of the true
+    -- closest set. Enemies that left combat or died are dropped immediately
+    -- (handled implicitly: they're absent from combatTracker/ranked).
+    local kept = {}
+    for _, enemy in ipairs(currentlyVisible) do
+        if rankOf[enemy.id] then -- still a valid, in-combat candidate
+            if trueClosest[enemy.id] then
+                bumpTimers[enemy.id] = nil
+                kept[#kept + 1] = enemy
+            else
+                local remaining = (bumpTimers[enemy.id] or BUMP_STICKINESS_SECONDS) - dt
+                if remaining > 0 then
+                    bumpTimers[enemy.id] = remaining
+                    kept[#kept + 1] = enemy
+                else
+                    bumpTimers[enemy.id] = nil
+                end
+            end
+        else
+            bumpTimers[enemy.id] = nil
+        end
+    end
+
+    -- Fill any remaining slots with the highest-ranked candidates not
+    -- already kept, in distance order.
+    local keptIds = {}
+    for _, enemy in ipairs(kept) do
+        keptIds[enemy.id] = true
+    end
+
+    local visible = { table.unpack(kept) }
+    for _, enemy in ipairs(ranked) do
+        if #visible >= MAX_VISIBLE_ENEMIES then break end
+        if not keptIds[enemy.id] then
+            visible[#visible + 1] = enemy
+            keptIds[enemy.id] = true
+        end
+    end
+
+    currentlyVisible = visible
+    return visible
+end
+
 local function onUpdate(dt)
     hud:onUpdate(dt)
+
+    if not core.isWorldPaused() then
+        enemyList:setEnemies(getClosestEnemies(dt))
+    end
+
+    enemyList:onUpdate(dt)
+
     root:update()
 end
 
@@ -54,7 +181,7 @@ return {
             if next(incomingTargetData.targets) == nil then
                 combatTracker[incomingTargetData.actor.id] = nil
             else
-                combatTracker[incomingTargetData.actor.id] = true
+                combatTracker[incomingTargetData.actor.id] = incomingTargetData.actor
             end
         end,
     },

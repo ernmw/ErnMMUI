@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local ui       = require("openmw.ui")
 local util     = require("openmw.util")
 local types    = require("openmw.types")
-local settings = require("openmw.settings")
+local settings = require("scripts.ErnMMUI.settings.settings")
 local const    = require('scripts.ErnMMUI.render.const')
 local async    = require('openmw.async')
 local colors   = require('scripts.ErnMMUI.render.colors')
@@ -90,12 +90,16 @@ local function barSize(max)
     end
 end
 
+local function getRecord(obj)
+    return obj.type.record(obj)
+end
+
 ---@return EnemyBar
 local function NewEnemyBar(enemy)
     local self = {
         _enemyObject = enemy,
-        _enemyName = enemy.record.name,
-        _enemyHealthStat = enemy.type.stats.dynamic.health(enemy),
+        _enemyName = enemy:isValid() and getRecord(enemy).name or nil,
+        _enemyHealthStat = enemy:isValid() and enemy.type.stats.dynamic.health(enemy) or nil,
         _enemyBar = nil,
         _elem = nil,
         _wasVisible = false,
@@ -183,8 +187,12 @@ end
 ---@param self EnemyBar
 ---@param enemy table
 function EnemyBarMethods:setEnemy(enemy)
+    if not (enemy and enemy:isValid()) then
+        self:clear()
+        return
+    end
     self._enemyObject = enemy
-    self._enemyName = enemy.record.name
+    self._enemyName = getRecord(enemy).name
     self._enemyHealthStat = enemy.type.stats.dynamic.health(enemy)
 
     updateFlashColors()
