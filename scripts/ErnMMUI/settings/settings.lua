@@ -133,6 +133,13 @@ local function init()
                 renderer = "checkbox"
             },
             {
+                key = "showEnemyHealth",
+                name = "showEnemyHealth_name",
+                description = "showEnemyHealth_description",
+                default = false,
+                renderer = "checkbox"
+            },
+            {
                 key = "colorHealth",
                 name = "colorHealth_name",
                 default = configColor("health"),
@@ -154,6 +161,12 @@ local function init()
                 key = "colorCharges",
                 name = "colorCharges_name",
                 default = configColor("magic_fill"),
+                renderer = "color"
+            },
+            {
+                key = "colorEnemyHealth",
+                name = "colorEnemyHealth_name",
+                default = configColor("health"),
                 renderer = "color"
             },
         }

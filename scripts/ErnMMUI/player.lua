@@ -21,6 +21,9 @@ local margin   = require("scripts.ErnMMUI.render.margin")
 local statsHud = require('scripts.ErnMMUI.render.statshud')
 
 
+local combatTracker = {}
+
+
 local hud = statsHud.New()
 
 
@@ -43,7 +46,18 @@ local function onUpdate(dt)
     root:update()
 end
 
+
+
 return {
+    eventHandlers = {
+        OMWMusicCombatTargetsChanged = function(incomingTargetData)
+            if next(incomingTargetData.targets) == nil then
+                combatTracker[incomingTargetData.actor.id] = nil
+            else
+                combatTracker[incomingTargetData.actor.id] = true
+            end
+        end,
+    },
     engineHandlers = {
         onUpdate = onUpdate,
     }

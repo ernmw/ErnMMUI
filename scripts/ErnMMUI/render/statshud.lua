@@ -20,6 +20,7 @@ local ui          = require('openmw.ui')
 local util        = require('openmw.util')
 local HeartHealth = require('scripts.ErnMMUI.render.hearthealth')
 local iconstack   = require('scripts.ErnMMUI.render.iconstack')
+local colors      = require("scripts.ErnMMUI.render.colors")
 local Bar         = require('scripts.ErnMMUI.render.bar')
 local core        = require("openmw.core")
 local settings    = require("scripts.ErnMMUI.settings.settings")
@@ -50,10 +51,10 @@ local FLASH_MAGICKA
 local FLASH_CHARGES
 
 local function updateFlashColors()
-    FLASH_HEALTH  = lerpColor(settings.ui.colorHealth, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-    FLASH_FATIGUE = lerpColor(settings.ui.colorFatigue, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-    FLASH_MAGICKA = lerpColor(settings.ui.colorMagicka, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
-    FLASH_CHARGES = lerpColor(settings.ui.colorCharges, util.color.rgba(0.9, 0.9, 0.9, 1), 0.7)
+    FLASH_HEALTH  = colors.lerpColor(settings.ui.colorHealth, const.FLASH_GRAY, 0.7)
+    FLASH_FATIGUE = colors.lerpColor(settings.ui.colorFatigue, const.FLASH_GRAY, 0.7)
+    FLASH_MAGICKA = colors.lerpColor(settings.ui.colorMagicka, const.FLASH_GRAY, 0.7)
+    FLASH_CHARGES = colors.lerpColor(settings.ui.colorCharges, const.FLASH_GRAY, 0.7)
 end
 updateFlashColors()
 

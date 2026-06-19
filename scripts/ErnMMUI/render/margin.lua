@@ -31,12 +31,23 @@ local function padWidget(sizeH, sizeV)
 end
 
 
-local function addMarginLayout(inner, padding)
+local function deepCopy(orig)
+    local t = type(orig)
+    if t ~= "table" then return orig end
+    local copy = {}
+    for k, v in next, orig, nil do
+        copy[deepCopy(k)] = deepCopy(v)
+    end
+    setmetatable(copy, deepCopy(getmetatable(orig)))
+    return copy
+end
+
+local function addMarginLayout(inner, padding, props)
+    local copiedProps = props and deepCopy(props) or {}
+    copiedProps.horizontal = false
     return {
         type = ui.TYPE.Flex,
-        props = {
-            horizontal = false,
-        },
+        props = copiedProps,
         external = {
             grow = 1,
         },

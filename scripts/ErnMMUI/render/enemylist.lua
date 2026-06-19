@@ -16,23 +16,15 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-local util = require("openmw.util")
+local ui       = require("openmw.ui")
+local util     = require("openmw.util")
+local types    = require("openmw.types")
+local settings = require("openmw.settings")
+local const    = require('scripts.ErnMMUI.render.const')
+local async    = require('openmw.async')
+local colors   = require('scripts.ErnMMUI.render.colors')
+local Bar      = require('scripts.ErnMMUI.render.bar')
 
-return {
-    HEARTS_PER_ROW      = 10,
-    -- a heart must represent at least this many HP
-    MIN_HP_PER_HEART    = 8,
-    -- display size of each heart icon in pixels
-    HEART_SIZE          = 32,
-    HEART_PADDING       = 2,
-    -- How long a flash border stays visible after a flash-start trigger (seconds).
-    FLASH_DURATION      = 0.5,
-    -- How fast the "beat" animation cycles between frame-A and frame-B (seconds per frame).
-    BEAT_FRAME_DURATION = 0.2,
-    BAR_LENGTH_FACTOR   = 20,
-    BAR_HEIGHT          = 24,
-
-    ENEMY_BAR_LENGTH    = 100,
-
-    FLASH_GRAY          = util.color.rgba(0.9, 0.9, 0.9, 1)
-}
+--- this is a horizontal flex list of enemy bars.
+--- each enemy bar occupies a slot in the flex list, and should not shift left or right
+--- if a different enemy leaves combat or dies. they should be relatively sticky in this way.
