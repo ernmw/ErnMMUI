@@ -20,6 +20,7 @@ local util                    = require('openmw.util')
 local core                    = require('openmw.core')
 local pself                   = require('openmw.self')
 local types                   = require('openmw.types')
+local async                   = require('openmw.async')
 local margin                  = require("scripts.ErnMMUI.render.margin")
 local statsHud                = require('scripts.ErnMMUI.render.statshud')
 local enemylist               = require('scripts.ErnMMUI.render.enemylist')
@@ -43,6 +44,26 @@ local hud = statsHud.New()
 local enemyList = enemylist.New()
 
 
+local topCenter = util.vector2(0.5, 0)
+local bottomCenter = util.vector2(0.5, 1)
+
+local function enemyBarLocation()
+    if settings.ui.enemyHealthAnchor == "top" then
+        return topCenter
+    else
+        return bottomCenter
+    end
+end
+
+local function getPaddedEnemyList()
+    local padded = margin.addMarginLayout(enemyList:getElement(), 5, {
+        relativePosition = enemyBarLocation(),
+        anchor = enemyBarLocation(),
+    })
+    padded.name = "enemy"
+    return padded
+end
+
 local root = ui.create {
     name = "root",
     layer = 'HUD',
@@ -52,14 +73,22 @@ local root = ui.create {
         relativeSize = util.vector2(1, 1),
         anchor = util.vector2(0, 0),
     },
-    content = ui.content {
-        margin.addMarginLayout(hud:getElement(), 5),
-        margin.addMarginLayout(enemyList:getElement(), 5, {
-            relativePosition = util.vector2(0.5, 0),
-            anchor = util.vector2(0.5, 0),
-        })
-    }
+    content = ui.content {}
 }
+
+local function buildRootContent()
+    local items = {}
+    items[#items + 1] = margin.addMarginLayout(hud:getElement(), 5)
+    items[#items + 1] = getPaddedEnemyList()
+    root.layout.content = ui.content(items)
+end
+buildRootContent()
+
+-- invalidate the element when settings change
+settings.ui.subscribe(async:callback(function(section, key)
+    buildRootContent()
+    root:update()
+end))
 
 -- The set of enemies actually shown last frame (array of GameObjects).
 local currentlyVisible = {}

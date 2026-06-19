@@ -24,6 +24,8 @@ uniformBarLength_description: "Keep bars a uniform length instead of scaling the
 
 showEnemyHealth_name: "Show Enemy Health"
 showEnemyHealth_description: "Show the health of enemies in combat with you."
+enemyHealthAnchor_name: "Enemy Health Location"
+enemyHealthAnchor_description: "Where the enemy health bars show up."
 
 colorHealth_name: "Health Bar Color"
 colorFatigue_name: "Fatigue Bar Color"
@@ -35,3 +37,5 @@ bar: "Bar"
 runes: "Runes"
 pips: "Pips"
 hearts: "Hearts"
+top: "Top"
+bottom: "Bottom"

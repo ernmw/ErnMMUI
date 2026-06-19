@@ -36,12 +36,13 @@ local function groupKey(groupName)
     return 'Settings/' .. MOD_NAME .. '/' .. groupName
 end
 
-local magickaType   = { "bar", "runes", "pips" }
-local chargesType   = { "bar", "pips" }
-local healthType    = { "bar", "hearts" }
+local magickaType       = { "bar", "runes", "pips" }
+local chargesType       = { "bar", "pips" }
+local healthType        = { "bar", "hearts" }
+local enemyHealthAnchor = { "top", "bottom" }
 
-local adminGroupKey = groupKey("Admin")
-local uiGroupKey    = groupKey("UI")
+local adminGroupKey     = groupKey("Admin")
+local uiGroupKey        = groupKey("UI")
 
 local function init()
     interfaces.Settings.registerPage {
@@ -122,7 +123,7 @@ local function init()
                 key = "alwaysShowMagicka",
                 name = "alwaysShowMagicka_name",
                 description = "alwaysShowMagicka_description",
-                default = false,
+                default = true,
                 renderer = "checkbox"
             },
             {
@@ -138,6 +139,14 @@ local function init()
                 description = "showEnemyHealth_description",
                 default = false,
                 renderer = "checkbox"
+            },
+            {
+                key = "enemyHealthAnchor",
+                name = "enemyHealthAnchor_name",
+                description = "enemyHealthAnchor_description",
+                argument = { items = enemyHealthAnchor, l10n = MOD_NAME },
+                default = enemyHealthAnchor[1],
+                renderer = "select",
             },
             {
                 key = "colorHealth",
