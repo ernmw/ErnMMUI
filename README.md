@@ -18,6 +18,7 @@ content=ErnMMUI.omwscripts
 - HayghinDaedricFont by Georg A. Duffner & M. Millar -- https://github.com/mmillar-bolis/HayghinDaedricFont (OFL-1.1 license)
 - PCP myui by Qlonever (MIT)
 - SnoopthDuckDuck Things (CC0)
+- Modernized UI (public domain)
 
 ## random notes
 

@@ -185,6 +185,11 @@ return {
                 combatTracker[incomingTargetData.actor.id] = incomingTargetData.actor
             end
         end,
+        HUDTransparencyChange = function(data)
+            if root then
+                root.layout.props.alpha = data.alpha
+            end
+        end,
     },
     engineHandlers = {
         onUpdate = onUpdate,
