@@ -36,8 +36,10 @@ updateFlashColors()
 ---@field _enemyObject table?
 ---@field _enemyName string?
 ---@field _enemyHealthStat table
----@field _enemyBar     table   Bar object (used when settings.ui.hearts is false)
+---@field _enemyBar     table   Bar object
 ---@field _elem          table   root ui element
+---@field _wasVisible    boolean whether the bar content was built (enemy valid+alive) last frame
+---@field _settingsSub   table?  subscription handle, used to unsubscribe on destroy
 local EnemyBarMethods   = {}
 EnemyBarMethods.__index = EnemyBarMethods
 
@@ -47,10 +49,18 @@ local paddingLayout     = {
 }
 
 ---@param self EnemyBar
+---@return boolean visible whether the enemy is currently valid and alive
+local function isEnemyVisible(self)
+    return self._enemyObject ~= nil
+        and self._enemyObject:isValid()
+        and not types.Actor.isDead(self._enemyObject)
+end
+
+---@param self EnemyBar
 local function rebuildContent(self)
     local items = {}
 
-    if self._enemyObject and self._enemyObject:isValid() and not types.Actor.isDead(self._enemyObject) then
+    if isEnemyVisible(self) then
         -- we need to render the bar
         items[#items + 1] = {
             --template = interfaces.MWUI.templates.textHeader,
@@ -65,7 +75,7 @@ local function rebuildContent(self)
             }
         }
         items[#items + 1] = paddingLayout
-        items[#items + 1] = self._enemyBar:getElement()
+        items[#items + 1] = self._enemyBar.elem
     end
 
     self._elem.layout.content = ui.content(items)
@@ -88,6 +98,8 @@ local function NewEnemyBar(enemy)
         _enemyHealthStat = enemy.type.stats.dynamic.health(enemy),
         _enemyBar = nil,
         _elem = nil,
+        _wasVisible = false,
+        _settingsSub = nil,
     }
     setmetatable(self, EnemyBarMethods)
 
@@ -112,17 +124,101 @@ local function NewEnemyBar(enemy)
         content = ui.content {},
     })
 
+    self._wasVisible = isEnemyVisible(self)
     rebuildContent(self)
     self._elem:update()
 
     -- Watch for the hearts setting being toggled.
-    settings.ui.subscribe(async:callback(function(section, key)
+    self._settingsSub = settings.ui.subscribe(async:callback(function(section, key)
         makeBars()
         rebuildContent(self)
         self._elem:update()
     end))
 
     return self
+end
+
+--- Refresh health stat, animate the bar, and rebuild content if visibility changed.
+---@param self EnemyBar
+---@param dt number elapsed seconds
+function EnemyBarMethods:onUpdate(dt)
+    local visible = isEnemyVisible(self)
+
+    if visible then
+        self._enemyHealthStat = self._enemyObject.type.stats.dynamic.health(self._enemyObject)
+        local max = math.max(self._enemyHealthStat.base + self._enemyHealthStat.modifier, 1)
+        local ratio = self._enemyHealthStat.current / max
+        self._enemyBar:onUpdate(dt, ratio, barSize(max))
+    end
+
+    if visible ~= self._wasVisible then
+        self._wasVisible = visible
+        rebuildContent(self)
+        self._elem:update()
+    end
+end
+
+--- Return the root UI element for embedding in a parent layout.
+---@param self EnemyBar
+---@return table
+function EnemyBarMethods:getElement()
+    return self._elem
+end
+
+--- Returns whether this bar currently has an enemy to track.
+---@param self EnemyBar
+---@return boolean
+function EnemyBarMethods:isVisible()
+    return isEnemyVisible(self)
+end
+
+--- Returns the tracked enemy game object, if any.
+---@param self EnemyBar
+---@return table?
+function EnemyBarMethods:getEnemyObject()
+    return self._enemyObject
+end
+
+--- Re-target this EnemyBar onto a different enemy, refreshing its bar state.
+---@param self EnemyBar
+---@param enemy table
+function EnemyBarMethods:setEnemy(enemy)
+    self._enemyObject = enemy
+    self._enemyName = enemy.record.name
+    self._enemyHealthStat = enemy.type.stats.dynamic.health(enemy)
+
+    updateFlashColors()
+    local max = math.max(self._enemyHealthStat.base + self._enemyHealthStat.modifier, 1)
+    self._enemyBar:reset(self._enemyHealthStat.current / max)
+    self._enemyBar.elem.layout.props.size = barSize(max)
+    self._enemyBar.elem:update()
+
+    self._wasVisible = isEnemyVisible(self)
+    rebuildContent(self)
+    self._elem:update()
+end
+
+--- Clear this slot so it renders nothing until setEnemy is called again.
+---@param self EnemyBar
+function EnemyBarMethods:clear()
+    self._enemyObject = nil
+    self._enemyName = nil
+    self._wasVisible = false
+    rebuildContent(self)
+    self._elem:update()
+end
+
+--- Tear down the UI element and unsubscribe from settings changes.
+---@param self EnemyBar
+function EnemyBarMethods:destroy()
+    if self._settingsSub then
+        self._settingsSub:unsubscribe()
+        self._settingsSub = nil
+    end
+    if self._elem then
+        self._elem:destroy()
+        self._elem = nil
+    end
 end
 
 return {
