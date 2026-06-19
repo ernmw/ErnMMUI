@@ -32,16 +32,16 @@
         </Widget>
 
         <!-- Equipped weapon/selected spell name display for a few seconds after it changes -->
-        <Widget type="TextBox" skin="SandText" position="13 118 270 24" name="WeaponSpellName" align="Left Bottom HStretch">
+        <Widget type="TextBox" skin="SandText" position="17 58 270 24" name="WeaponSpellName" align="Right Top HStretch">
             <Property key="Visible" value="false"/>
-            <Property key="TextAlign" value="Left"/>
+            <Property key="TextAlign" value="Right"/>
             <Property key="TextShadow" value="true"/>
             <Property key="TextShadowColour" value="0 0 0"/>
             <Property key="NeedMouse" value="false"/>
         </Widget>
 
         <!-- Equipped weapon box -->
-        <Widget type="Button" skin="" position="14 146 36 42" align="Left Bottom" name="WeapBox">
+        <Widget type="Button" skin="" position="250 12 36 42" align="Right Top" name="WeapBox">
             <Widget type="Widget" skin="HUD_Box" position="0 0 36 36">
                 <Property key="NeedMouse" value="false"/>
                 <Widget type="ItemWidget" skin="MW_ItemIconNoShadow" position="-3 -3 42 42" align="Left Top" name="WeapImage">
@@ -54,7 +54,7 @@
         </Widget>
 
         <!-- Selected spell box -->
-        <Widget type="Button" position="53 146 36 42" align="Left Bottom" name="SpellBox">
+        <Widget type="Button" position="211 12 36 42" align="Right Top" name="SpellBox">
             <Widget type="Widget" skin="HUD_Box" position="0 0 36 36">
                 <Widget type="SpellWidget" skin="MW_ItemIconNoShadow" position="-3 -3 42 42" align="Left Top" name="SpellImage"/>
                 <Property key="NeedMouse" value="false"/>
@@ -65,18 +65,18 @@
         </Widget>
 
         <!-- Sneak indicator box -->
-        <Widget type="Button" skin="" position="0 0 128 128" align="Center Center" name="SneakBox">
+        <Widget type="Button" skin="" position="302 152 36 36" align="Left Bottom" name="SneakBox">
             <Property key="Visible" value="false"/>
-            <Widget type="Widget" skin="" position="0 0 128 128">
+            <Widget type="Widget" skin="HUD_Box" position="0 0 36 36">
                 <Property key="NeedMouse" value="false"/>
-                <Widget type="ImageBox" skin="ImageBox" position="0 0 128 128" align="Left Top" name="SneakImage">
+                <Widget type="ImageBox" skin="ImageBox" position="2 2 32 32" align="Left Top" name="SneakImage">
                     <Property key="NeedMouse" value="false"/>
-                    <Property key="ImageTexture" value="textures\ErnMMUI\sneak.dds"/>
+                    <Property key="ImageTexture" value="icons\k\stealth_sneak.dds"/>
                 </Widget>
             </Widget>
         </Widget>
 
-        <!-- Spell effects box -->
+        <!-- Spell effects box (disabled) -->
         <Widget type="Widget" skin="" position="0 0 0 0" align="Right Bottom" name="EffectBox">
         </Widget>
 
