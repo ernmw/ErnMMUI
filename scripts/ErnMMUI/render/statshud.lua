@@ -122,13 +122,13 @@ local function rebuildContent(self)
 
     -- Health: heart widget or bar depending on the setting.
     if settings.ui.healthType == "hearts" then
-        items[#items + 1] = self._heartHealth:getElement().layout
+        items[#items + 1] = self._heartHealth:getElement()
     else
-        items[#items + 1] = self._healthBar.elem.layout
+        items[#items + 1] = self._healthBar.elem
     end
 
     items[#items + 1] = paddingLayout
-    items[#items + 1] = self._fatigueBar.elem.layout
+    items[#items + 1] = self._fatigueBar.elem
     items[#items + 1] = paddingLayout
 
     if self._showMagickaBar then
@@ -139,7 +139,7 @@ local function rebuildContent(self)
             items[#items + 1] = self._magickaPipsStack:getElement()
             items[#items + 1] = paddingLayout
         else
-            items[#items + 1] = self._magickaBar.elem.layout
+            items[#items + 1] = self._magickaBar.elem
             items[#items + 1] = paddingLayout
         end
     end
