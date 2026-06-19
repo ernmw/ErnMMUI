@@ -32,7 +32,8 @@ return {
     BAR_LENGTH_FACTOR   = 20,
     BAR_HEIGHT          = 24,
 
-    ENEMY_BAR_LENGTH    = 100,
+    ENEMY_BAR_LENGTH    = 140,
+    MAX_ENEMY_SLOTS     = 3,
 
     FLASH_GRAY          = util.color.rgba(0.9, 0.9, 0.9, 1),
     ENEMY_TEXT          = util.color.rgba(0.9, 0.9, 0.9, 1),

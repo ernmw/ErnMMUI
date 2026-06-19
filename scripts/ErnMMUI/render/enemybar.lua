@@ -56,6 +56,10 @@ local function isEnemyVisible(self)
         and not types.Actor.isDead(self._enemyObject)
 end
 
+local function scaleTextSize(size)
+    return util.clamp(math.ceil(size * settings.ui.scaling), 6, 18)
+end
+
 ---@param self EnemyBar
 local function rebuildContent(self)
     local items = {}
@@ -70,7 +74,7 @@ local function rebuildContent(self)
                 textColor = const.ENEMY_TEXT,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
-                textSize = 12,
+                textSize = scaleTextSize(24),
                 anchor = util.vector2(0.5, 0),
                 textShadow = true,
                 textShadowColor = const.ENEMY_TEXT_SHADOW
@@ -87,7 +91,7 @@ local function barSize(max)
     if settings.ui.uniformBarLength then
         return util.vector2(const.ENEMY_BAR_LENGTH * settings.ui.scaling, const.BAR_HEIGHT * settings.ui.scaling)
     else
-        return util.vector2(const.BAR_LENGTH_FACTOR * math.sqrt(max) * settings.ui.scaling,
+        return util.vector2(const.BAR_LENGTH_FACTOR * math.sqrt(max) * settings.ui.scaling * 0.5,
             const.BAR_HEIGHT * settings.ui.scaling)
     end
 end

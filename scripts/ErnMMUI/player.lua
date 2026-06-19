@@ -23,9 +23,9 @@ local types                   = require('openmw.types')
 local margin                  = require("scripts.ErnMMUI.render.margin")
 local statsHud                = require('scripts.ErnMMUI.render.statshud')
 local enemylist               = require('scripts.ErnMMUI.render.enemylist')
+local const                   = require('scripts.ErnMMUI.render.const')
 local settings                = require("scripts.ErnMMUI.settings.settings")
 
-local MAX_VISIBLE_ENEMIES     = 4
 -- An enemy that falls out of the closest-N set must stay outside it for this
 -- many seconds before it's actually dropped from the visible list. This
 -- avoids flicker when two enemies are near-equidistant and jockeying for
@@ -106,7 +106,7 @@ local function getClosestEnemies(dt)
     end
 
     local trueClosest = {}
-    for i = 1, math.min(MAX_VISIBLE_ENEMIES, #ranked) do
+    for i = 1, math.min(const.MAX_ENEMY_SLOTS, #ranked) do
         trueClosest[ranked[i].id] = true
     end
 
@@ -143,7 +143,7 @@ local function getClosestEnemies(dt)
 
     local visible = { table.unpack(kept) }
     for _, enemy in ipairs(ranked) do
-        if #visible >= MAX_VISIBLE_ENEMIES then break end
+        if #visible >= const.MAX_ENEMY_SLOTS then break end
         if not keptIds[enemy.id] then
             visible[#visible + 1] = enemy
             keptIds[enemy.id] = true
@@ -159,8 +159,12 @@ end
 local function onUpdate(dt)
     hud:onUpdate(dt)
 
-    if not core.isWorldPaused() then
-        enemyList:setEnemies(getClosestEnemies(dt))
+    if settings.ui.showEnemyHealth then
+        if not core.isWorldPaused() then
+            enemyList:setEnemies(getClosestEnemies(dt))
+        end
+    else
+        enemyList:setEnemies({})
     end
 
     enemyList:onUpdate(dt)

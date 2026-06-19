@@ -19,8 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local ui                 = require("openmw.ui")
 local util               = require("openmw.util")
 local EnemyBar           = require('scripts.ErnMMUI.render.enemybar')
-
-local MAX_ENEMY_SLOTS    = 4
+local const              = require('scripts.ErnMMUI.render.const')
 
 local paddingLayout      = {
     name = 'padWidget',
@@ -47,7 +46,7 @@ EnemyListMethods.__index = EnemyListMethods
 ---@param self EnemyList
 local function rebuildContent(self)
     local items = {}
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         local slot = self._slots[i]
         if slot then
             if #items > 0 then
@@ -67,7 +66,7 @@ local function NewEnemyList()
     }
     setmetatable(self, EnemyListMethods)
 
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         self._slots[i] = false
     end
 
@@ -108,7 +107,7 @@ function EnemyListMethods:setEnemies(enemyList)
     end
 
     -- Free slots whose enemy is no longer present.
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         local slot = self._slots[i]
         if slot then
             local enemy = slot:getEnemyObject()
@@ -121,7 +120,7 @@ function EnemyListMethods:setEnemies(enemyList)
     -- Figure out which enemies are already assigned to a slot, so we don't
     -- double-assign them.
     local alreadyAssigned = {}
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         local slot = self._slots[i]
         if slot then
             local enemy = slot:getEnemyObject()
@@ -136,10 +135,10 @@ function EnemyListMethods:setEnemies(enemyList)
     for _, enemy in ipairs(enemyList) do
         if not alreadyAssigned[enemy] and enemy and enemy:isValid() then
             -- find the next free slot
-            while slotIdx <= MAX_ENEMY_SLOTS and self._slots[slotIdx] and self._slots[slotIdx]:getEnemyObject() do
+            while slotIdx <= const.MAX_ENEMY_SLOTS and self._slots[slotIdx] and self._slots[slotIdx]:getEnemyObject() do
                 slotIdx = slotIdx + 1
             end
-            if slotIdx > MAX_ENEMY_SLOTS then
+            if slotIdx > const.MAX_ENEMY_SLOTS then
                 break
             end
 
@@ -162,7 +161,7 @@ end
 ---@param self EnemyList
 ---@param dt   number elapsed seconds
 function EnemyListMethods:onUpdate(dt)
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         local slot = self._slots[i]
         if slot then
             slot:onUpdate(dt)
@@ -180,7 +179,7 @@ end
 --- Tear down all slots and the root UI element.
 ---@param self EnemyList
 function EnemyListMethods:destroy()
-    for i = 1, MAX_ENEMY_SLOTS do
+    for i = 1, const.MAX_ENEMY_SLOTS do
         local slot = self._slots[i]
         if slot then
             slot:destroy()
