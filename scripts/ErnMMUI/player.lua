@@ -23,6 +23,7 @@ local types                   = require('openmw.types')
 local margin                  = require("scripts.ErnMMUI.render.margin")
 local statsHud                = require('scripts.ErnMMUI.render.statshud')
 local enemylist               = require('scripts.ErnMMUI.render.enemylist')
+local settings                = require("scripts.ErnMMUI.settings.settings")
 
 local MAX_VISIBLE_ENEMIES     = 4
 -- An enemy that falls out of the closest-N set must stay outside it for this
@@ -53,18 +54,10 @@ local root = ui.create {
     },
     content = ui.content {
         margin.addMarginLayout(hud:getElement(), 5),
-        {
-            name = 'enemyListAnchor',
-            type = ui.TYPE.Widget,
-            props = {
-                -- top-center of the screen
-                relativePosition = util.vector2(0.5, 0),
-                anchor = util.vector2(0.5, 0),
-            },
-            content = ui.content {
-                margin.addMarginLayout(enemyList:getElement(), 5)
-            }
-        }
+        margin.addMarginLayout(enemyList:getElement(), 5, {
+            relativePosition = util.vector2(0.5, 0),
+            anchor = util.vector2(0.5, 0),
+        })
     }
 }
 
@@ -87,7 +80,7 @@ local function rankEnemiesByDistance()
     end
 
     table.sort(candidates, function(a, b)
-        return (a.position - playerPos):length() < (b.position - playerPos):length()
+        return (a.position - playerPos):length2() < (b.position - playerPos):length2()
     end)
 
     return candidates
@@ -154,6 +147,8 @@ local function getClosestEnemies(dt)
         if not keptIds[enemy.id] then
             visible[#visible + 1] = enemy
             keptIds[enemy.id] = true
+
+            settings.debugPrint("combat! " .. tostring(enemy.type.record(enemy).name))
         end
     end
 
@@ -179,8 +174,10 @@ return {
     eventHandlers = {
         OMWMusicCombatTargetsChanged = function(incomingTargetData)
             if next(incomingTargetData.targets) == nil then
+                settings.debugPrint("combat ended with " .. tostring(incomingTargetData.actor.id))
                 combatTracker[incomingTargetData.actor.id] = nil
             else
+                settings.debugPrint("combat started with " .. tostring(incomingTargetData.actor.id))
                 combatTracker[incomingTargetData.actor.id] = incomingTargetData.actor
             end
         end,

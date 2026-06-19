@@ -67,11 +67,13 @@ local function rebuildContent(self)
             type = ui.TYPE.Text,
             props = {
                 text = self._enemyName,
-                textColor = const.FLASH_GRAY,
+                textColor = const.ENEMY_TEXT,
                 textAlignV = ui.ALIGNMENT.Center,
                 textAlignH = ui.ALIGNMENT.Center,
                 textSize = 12,
-                --anchor = util.vector2(0.5, 0),
+                anchor = util.vector2(0.5, 0),
+                textShadow = true,
+                textShadowColor = const.ENEMY_TEXT_SHADOW
             }
         }
         items[#items + 1] = paddingLayout
@@ -121,8 +123,8 @@ local function NewEnemyBar(enemy)
         name    = 'enemybar',
         props   = {
             horizontal = false,
-            arrange    = ui.ALIGNMENT.Start,
-            align      = ui.ALIGNMENT.Start,
+            arrange    = ui.ALIGNMENT.Center,
+            align      = ui.ALIGNMENT.Center,
             autoSize   = true,
         },
         content = ui.content {},
@@ -138,7 +140,7 @@ local function NewEnemyBar(enemy)
         rebuildContent(self)
         self._elem:update()
     end))
-
+    settings.debugPrint("new enemy bar for " .. tostring(self._enemyName))
     return self
 end
 
@@ -153,6 +155,7 @@ function EnemyBarMethods:onUpdate(dt)
         local max = math.max(self._enemyHealthStat.base + self._enemyHealthStat.modifier, 1)
         local ratio = self._enemyHealthStat.current / max
         self._enemyBar:onUpdate(dt, ratio, barSize(max))
+        self._elem:update()
     end
 
     if visible ~= self._wasVisible then
@@ -191,13 +194,15 @@ function EnemyBarMethods:setEnemy(enemy)
         self:clear()
         return
     end
+
     self._enemyObject = enemy
-    self._enemyName = getRecord(enemy).name
+    local newName = getRecord(enemy).name
+    settings.debugPrint("changing enemy bar from " .. tostring(self._enemyName) .. " to " .. newName)
+    self._enemyName = newName
     self._enemyHealthStat = enemy.type.stats.dynamic.health(enemy)
 
-    updateFlashColors()
     local max = math.max(self._enemyHealthStat.base + self._enemyHealthStat.modifier, 1)
-    self._enemyBar:reset(self._enemyHealthStat.current / max)
+    self._enemyBar:reset(math.max(0, self._enemyHealthStat.current) / max)
     self._enemyBar.elem.layout.props.size = barSize(max)
     self._enemyBar.elem:update()
 
@@ -209,6 +214,9 @@ end
 --- Clear this slot so it renders nothing until setEnemy is called again.
 ---@param self EnemyBar
 function EnemyBarMethods:clear()
+    if not self._enemyObject then
+        return
+    end
     self._enemyObject = nil
     self._enemyName = nil
     self._wasVisible = false

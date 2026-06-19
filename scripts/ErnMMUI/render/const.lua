@@ -34,5 +34,7 @@ return {
 
     ENEMY_BAR_LENGTH    = 100,
 
-    FLASH_GRAY          = util.color.rgba(0.9, 0.9, 0.9, 1)
+    FLASH_GRAY          = util.color.rgba(0.9, 0.9, 0.9, 1),
+    ENEMY_TEXT          = util.color.rgba(0.9, 0.9, 0.9, 1),
+    ENEMY_TEXT_SHADOW   = util.color.rgba(0.1, 0.1, 0.1, 1)
 }
